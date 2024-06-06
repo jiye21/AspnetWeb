@@ -1,0 +1,15 @@
+﻿@model AspnetWeb.Models.User
+
+<form class="login" method="post" asp-controller="Account" asp-action="Register">
+	<div class="title">REGISTER</div>
+	<input type="text" asp-for="UserId" placeholder="사용자 ID 입력" />
+	<span class="text-danger" asp-validation-for="UserId"></span>
+
+	<input type="text" asp-for="UserPassword" placeholder="사용자 비밀번호 입력" />
+	<span class="text-danger" asp-validation-for="UserPassword"></span>
+
+	<input type="text" asp-for="UserName" placeholder="사용자 이름 입력" />
+	<span class="text-danger" asp-validation-for="UserName"></span><br />
+
+	<button type="submit">Create</button>
+</form>
