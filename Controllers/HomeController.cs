@@ -25,17 +25,18 @@ namespace AspnetWeb.Controllers
             // 바로 이 주소로 들어온다면 접속이 가능하기때문.
 
             string sessionKey = HttpContext.Request.Cookies["SESSION_KEY"];
-            if(_redisCache.Get(sessionKey) != null)   // redis에 byte[]로 value가 설정되어있음.
+
+            if (!string.IsNullOrEmpty(sessionKey) && _redisCache.Get(sessionKey) != null)   // redis에 byte[]로 value가 설정되어있음.
             {
                 var sessionValue = _redisCache.Get(sessionKey);
                 int userNo = BitConverter.ToInt32(sessionValue);
-                ViewData["USER_NAME"] = userNo;
+                ViewData["USER_NO"] = userNo;
                 ViewData["SESSION_KEY"] = sessionKey;
-                                
+
                 return View();
 			}
 
-            // redis에 세션이 없을 때
+            // redis에 세션이 없거나 쿠키가 만료되었을때
             return RedirectToAction("Login", "Account");
         }
 

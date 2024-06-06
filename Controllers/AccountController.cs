@@ -6,7 +6,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Caching.Distributed;
 using System.Security.Cryptography;
 using System.Text;
-using System.Diagnostics;
 
 namespace AspnetWeb.Controllers
 {
@@ -51,17 +50,19 @@ namespace AspnetWeb.Controllers
                         string sessionKey = Guid.NewGuid().ToString();    // GUID는 매우 난수적이며 중복될 가능성이 매우 낮은 값.
 
                         var redisOption = new DistributedCacheEntryOptions();
-                        redisOption.SetAbsoluteExpiration(TimeSpan.FromSeconds(15));   // 현재를 기준으로 절대 만료 시간을 설정
+                        redisOption.SetAbsoluteExpiration(TimeSpan.FromSeconds(20));   // 현재를 기준으로 절대 만료 시간을 설정
                         byte[] userNoBytes = BitConverter.GetBytes(user.UserNo);
                         _redisCache.Set(sessionKey, userNoBytes, redisOption);   // redis에 sessionKey 저장, 값은 UID로 해서 어떤 유저인지 식별.
                                                                          // 세션은 연결된 유저가 누구인지 저장하고 있다. 
 
-						HttpContext.Response.Cookies.Append("SESSION_KEY", sessionKey); // 클라이언트에게 세션키 전달
+                        CookieOptions cookieOptions = new CookieOptions();
+                        cookieOptions.Expires = DateTimeOffset.UtcNow.AddSeconds(20);  // 쿠키도 만료시간 설정
+						HttpContext.Response.Cookies.Append("SESSION_KEY", sessionKey, cookieOptions); // 클라이언트에게 세션키 전달
                         return RedirectToAction("LoginSuccess", "Home");    // 로그인 성공 페이지로 이동
                     }
                 }
                 // 로그인에 실패했을 때 - 회원가입으로 넘기게 하기
-                //ModelState.AddModelError(string.Empty, "사용자 ID 혹은 비밀번호가 올바르지 않습니다. ");
+
                 
             }
             ViewData["LoginPage"] = true;
