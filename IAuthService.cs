@@ -7,5 +7,7 @@ namespace AspnetWeb
     {
         Task RegisterUserAsync(User model);
         Task<User> LoginUserAsync(LoginViewModel model);
+        bool IsSessionValid(string sessionKey);
+        void UpdateSessionAndCookie(string sessionKey, byte[] userNoBytes);
     }
 }

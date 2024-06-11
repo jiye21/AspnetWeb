@@ -11,9 +11,12 @@ namespace AspnetWeb
     public class AuthService : IAuthService
     {
         private readonly IDistributedCache _redisCache;
-        public AuthService(IDistributedCache redisCache)
+        private readonly IHttpContextAccessor _httpContextAccessor;
+
+        public AuthService(IDistributedCache redisCache, IHttpContextAccessor httpContextAccessor)
         {
             _redisCache = redisCache;
+            _httpContextAccessor = httpContextAccessor;
         }
 
         public async Task RegisterUserAsync(User model)
@@ -43,6 +46,31 @@ namespace AspnetWeb
             }
 
             return null;
+        }
+
+        public void UpdateSessionAndCookie(string sessionKey, byte[] userNoBytes)
+        {
+            var redisOptions = new DistributedCacheEntryOptions();
+            redisOptions.SetAbsoluteExpiration(TimeSpan.FromSeconds(20));
+            
+            _redisCache.Set(sessionKey, userNoBytes, redisOptions);
+
+            CookieOptions cookieOptions = new CookieOptions();
+            cookieOptions.Expires = DateTimeOffset.UtcNow.AddSeconds(20);
+
+            _httpContextAccessor.HttpContext.Response.Cookies.Append("SESSION_KEY", sessionKey, cookieOptions);
+        }
+
+        public bool IsSessionValid(string sessionKey)
+        {
+            var sessionValue = _redisCache.Get(sessionKey);
+            if (!string.IsNullOrEmpty(sessionKey) && sessionValue != null)
+            {
+                UpdateSessionAndCookie(sessionKey, sessionValue);  // 세션이 유효하다면 갱신해줌
+
+                return true;
+            }
+            return false;
         }
 
 

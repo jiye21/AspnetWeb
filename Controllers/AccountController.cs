@@ -42,15 +42,15 @@ namespace AspnetWeb.Controllers
             {
                 var user = await _authService.LoginUserAsync(model);
 
-                // 로그인에 성공했을 때
+                // 로그인에 성공했을 때 - 세션 생성
                 if (user != null)
                 {
                     string sessionKey = Guid.NewGuid().ToString();    // GUID는 매우 난수적이며 중복될 가능성이 매우 낮은 값.
 
-                    var redisOption = new DistributedCacheEntryOptions();
-                    redisOption.SetAbsoluteExpiration(TimeSpan.FromSeconds(20));   // 현재를 기준으로 절대 만료 시간을 설정
+                    var redisOptions = new DistributedCacheEntryOptions();
+                    redisOptions.SetAbsoluteExpiration(TimeSpan.FromSeconds(20));   // 현재를 기준으로 절대 만료 시간을 설정
                     byte[] userNoBytes = BitConverter.GetBytes(user.UserNo);
-                    _redisCache.Set(sessionKey, userNoBytes, redisOption);   // redis에 sessionKey 저장, 값은 UID로 해서 어떤 유저인지 식별.
+                    _redisCache.Set(sessionKey, userNoBytes, redisOptions);   // redis에 sessionKey 저장, 값은 UID로 해서 어떤 유저인지 식별.
                                                                              // 세션은 연결된 유저가 누구인지 저장하고 있다. 
 
                     CookieOptions cookieOptions = new CookieOptions();
@@ -71,7 +71,7 @@ namespace AspnetWeb.Controllers
         {
             string sessionKey = HttpContext.Request.Cookies["SESSION_KEY"];  // 클라이언트의 쿠키를 받아옴
 
-            if (!string.IsNullOrEmpty(sessionKey))
+            if (!string.IsNullOrEmpty(sessionKey) && _authService.IsSessionValid(sessionKey))
             {
                 HttpContext.Response.Cookies.Delete("SESSION_KEY");     // 클라이언트에게 해당 세션 키를 지우도록 쿠키를 전송
                 _redisCache.Remove(sessionKey);   // redis에서도 세션키 삭제

@@ -15,6 +15,8 @@ builder.Services.AddStackExchangeRedisCache(options =>                  // ºÐ»êÄ
 
 builder.Services.AddTransient<IAuthService, AuthService>();
 
+builder.Services.AddHttpContextAccessor();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
