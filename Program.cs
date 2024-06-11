@@ -1,8 +1,10 @@
+using AspnetWeb;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
+// DI, 의존성 주입
 builder.Services.AddControllersWithViews();
-// DI 의존성 주입
 // Session을 서비스에 등록
 builder.Services.AddSession();
 
@@ -10,6 +12,8 @@ builder.Services.AddStackExchangeRedisCache(options =>                  // 분산�
 {
     options.Configuration = "127.0.0.1";                                // redis 주소
 });
+
+builder.Services.AddTransient<IAuthService, AuthService>();
 
 var app = builder.Build();
 

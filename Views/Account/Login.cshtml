@@ -9,3 +9,19 @@
 	<span class="text-danger" asp-validation-for="UserPassword"></span><br />
 	<button type="submit">Login</button>
 </form>
+
+@section Scripts {
+    <script type="text/javascript">
+        function showSignUpAlert() {
+            if (confirm("로그인에 실패했습니다. 회원가입 하시겠습니까?")) {
+                window.location.href = '/Account/Register';
+            }
+        }
+    </script>
+    @if (ViewData["LoginFailed"] != null && (bool)ViewData["LoginFailed"])
+    {
+        <script type="text/javascript">
+            showSignUpAlert();
+        </script>
+    }
+}
