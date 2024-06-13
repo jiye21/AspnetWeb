@@ -13,6 +13,7 @@ using Google.Apis.Services;
 using Google.Apis.Oauth2.v2.Data;
 using Google.Apis.Auth.OAuth2.Responses;
 using Microsoft.EntityFrameworkCore;
+using Google;
 
 namespace AspnetWeb.Controllers
 {
@@ -21,12 +22,15 @@ namespace AspnetWeb.Controllers
 		private readonly IDistributedCache _redisCache;
         private readonly IAuthService _authService;
         private readonly GoogleAuthorizationCodeFlow _flow;
+        private readonly AspnetNoteDbContext _dbContext;
 
-        public HomeController(IDistributedCache redisCache, IAuthService authService, GoogleAuthorizationCodeFlow flow)  //  redisCache라는 이름으로 redis를 사용할것이라는걸 명시
+        public HomeController(IDistributedCache redisCache, IAuthService authService,
+            GoogleAuthorizationCodeFlow flow, AspnetNoteDbContext dbContext)  //  redisCache라는 이름으로 redis를 사용할것이라는걸 명시
 		{
 			_redisCache = redisCache;
             _authService = authService;
             _flow = flow;
+            _dbContext = dbContext;
 		}
 
 		public IActionResult Index()
@@ -53,8 +57,8 @@ namespace AspnetWeb.Controllers
                 var sessionValue = _redisCache.Get(sessionKey);
                 int userNo = BitConverter.ToInt32(sessionValue);
                 ViewData["USER_NO"] = userNo;
-                ViewData["SESSION_KEY"] = sessionKey;  // 내비게이션 바 변경을 위한 ViewData
 
+                ViewData["SESSION_KEY"] = sessionKey;  // 내비게이션 바 변경을 위한 ViewData
                 ViewData["Page"] = "LoginSuccess";
                 return View();
 			}
@@ -74,68 +78,16 @@ namespace AspnetWeb.Controllers
                 return RedirectToAction("Login", "Account");
             }
 
+            var googleUser = await _authService.GetGoogleUser(code);
 
-            try
-            {
-                var tokenResponse = _flow.ExchangeCodeForTokenAsync(null, code,
-                        "https://localhost:44396/Home/GoogleUserEmailList", CancellationToken.None).Result;
-
-                var accessToken = tokenResponse.AccessToken;
-
-                // 토큰을 정상적으로 받아옴 - 사용자 정보를 DB에 저장하거나 세션에 저장.
-                var oauth2Service = new Oauth2Service(new BaseClientService.Initializer()
-                {
-                    HttpClientInitializer = GoogleCredential.FromAccessToken(accessToken),
-                });
-
-                Userinfo userInfo = await oauth2Service.Userinfo.Get().ExecuteAsync();
-
-                var user = new User()
-                {
-                    UserName = userInfo.Name
-                };
-
-                var oAuthUser = new OAuthUser()
-                {
-                    GoogleEmail = userInfo.Email,
-                    GoogleUID = userInfo.Id
-                };
-
-                using (var db = new AspnetNoteDbContext())
-                {
-                    var userExists = await db.OAuthUsers
-                        .FirstOrDefaultAsync(u => u.GoogleUID.Equals(oAuthUser.GoogleUID));
-                    if (userExists != null)     // 이미 데이터베이스에 유저가 존재할때 - 세션 생성
-                    {
-                        _authService.GenerateSession(oAuthUser.UID);
-
-                        ViewData["SESSION_KEY"] = string.Empty;  // 내비게이션 바 변경을 위한 ViewData
-                        ViewData["Page"] = "Google";
-                        return View(oAuthUser);
-                    }
-
-                    // 데이터베이스에 구글유저 저장
-                    await db.Users.AddAsync(user);
-                    await db.SaveChangesAsync();  // 기본 키 값이 설정됨
-
-                    oAuthUser.UID = user.UID;
-                    await db.OAuthUsers.AddAsync(oAuthUser);
-
-                    db.SaveChanges();
-                }
-
-
-                ViewData["SESSION_KEY"] = string.Empty;  // 내비게이션 바 변경을 위한 ViewData
-                ViewData["Page"] = "Google";
-
-                _authService.GenerateSession(oAuthUser.UID);
-                return View(oAuthUser);
-            }
-            catch (Exception ex)   // 토큰을 정상적으로 받아오지 못했을 때
+            if (googleUser == null)   // 유저를 정상적으로 받아오지 못했을 때
             {
                 return RedirectToAction("Login", "Account");
             }
 
+            ViewData["SESSION_KEY"] = string.Empty;  // 내비게이션 바 변경을 위한 ViewData
+            ViewData["Page"] = "Google";
+            return View(googleUser);
         }
 
         public IActionResult MyPage()
@@ -148,7 +100,6 @@ namespace AspnetWeb.Controllers
             {
 
                 ViewData["SESSION_KEY"] = string.Empty;  // 내비게이션 바 변경을 위한 ViewData
-
                 ViewData["Page"] = "MyPage";
                 return View();
             }

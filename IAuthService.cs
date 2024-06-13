@@ -11,5 +11,6 @@ namespace AspnetWeb
         void UpdateSessionAndCookie(string sessionKey, byte[] userNoBytes);
         void GenerateSession(int uid);
         void RemoveSession(string sessionKey);
+        Task<OAuthUser> GetGoogleUser(string code);
     }
 }

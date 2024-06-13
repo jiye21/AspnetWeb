@@ -4,6 +4,9 @@ using Google.Apis.Auth.OAuth2.Flows;
 using Google.Apis.Auth.OAuth2;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Google.Apis.Oauth2.v2;
+using Google;
+using Microsoft.EntityFrameworkCore;
+using AspnetWeb.DataContext;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -39,6 +42,8 @@ builder.Services
         }
     });
 
+// controller에서 dbcontext를 생성자 주입하기 위함
+builder.Services.AddDbContext<AspnetNoteDbContext>();
 
 var app = builder.Build();
 
