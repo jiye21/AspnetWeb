@@ -1,4 +1,9 @@
 using AspnetWeb;
+using Google.Apis.Auth.AspNetCore3;
+using Google.Apis.Auth.OAuth2.Flows;
+using Google.Apis.Auth.OAuth2;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Google.Apis.Oauth2.v2;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -15,7 +20,25 @@ builder.Services.AddStackExchangeRedisCache(options =>                  // 분산�
 
 builder.Services.AddTransient<IAuthService, AuthService>();
 
+// controller가 아닌 곳에서 httpcontext를 받아오기 위함
 builder.Services.AddHttpContextAccessor();
+
+builder.Services
+    .AddSingleton<GoogleAuthorizationCodeFlow>(provider =>
+    {
+        using (var stream = new FileStream("client_secrets.json", FileMode.Open, FileAccess.Read))
+        {
+            var clientSecrets = GoogleClientSecrets.FromStream(stream).Secrets;
+            var initializer = new GoogleAuthorizationCodeFlow.Initializer
+            {
+                ClientSecrets = clientSecrets,
+                Scopes = [Oauth2Service.Scope.Openid, Oauth2Service.Scope.UserinfoEmail
+                ,Oauth2Service.Scope.UserinfoProfile]   // scope: 사용자에게 요청할 정보 범위
+            };
+            return new GoogleAuthorizationCodeFlow(initializer);   // =GoogleAuthorizationCodeFlow
+        }
+    });
+
 
 var app = builder.Build();
 
@@ -35,6 +58,7 @@ app.UseSession();
 
 app.UseRouting();
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllerRoute(

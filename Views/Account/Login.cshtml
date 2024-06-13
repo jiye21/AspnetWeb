@@ -1,27 +1,57 @@
 ﻿@model AspnetWeb.ViewModel.LoginViewModel
 
 
-<form class="login" method="post" asp-controller="Account" asp-action="Login">
+<form class="login" id="login" method="post" asp-controller="Account" asp-action="Login">
 	<div class="text-danger" asp-validation-summary="ModelOnly"></div>
+
 	<input type="text" asp-for="UserId" placeholder="UserID">
 	<span class="text-danger" asp-validation-for="UserId"></span>
-	<input type="password" asp-for="UserPassword" placeholder="Password">
-	<span class="text-danger" asp-validation-for="UserPassword"></span><br />
-	<button type="submit">Login</button>
+
+	<input type="password" id="password" asp-for="UserPassword" placeholder="Password">
+	<span class="text-danger" asp-validation-for="UserPassword"></span>
+
+	<div class="email-container">
+		<button type="submit">Login</button>
+	</div>
+	<div class="social-container">
+		<p>or use Google for Login</p>
+		<a href="https://localhost:44396/Account/GoogleLogin" class="social"><i class="fab fa-google-plus-g"></i></a>
+	</div>
 </form>
 
 @section Scripts {
-    <script type="text/javascript">
-        function showSignUpAlert() {
-            if (confirm("로그인에 실패했습니다. 회원가입 하시겠습니까?")) {
-                window.location.href = '/Account/Register';
-            }
-        }
-    </script>
-    @if (ViewData["LoginFailed"] != null && (bool)ViewData["LoginFailed"])
-    {
-        <script type="text/javascript">
-            showSignUpAlert();
-        </script>
-    }
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/js-sha256/0.9.0/sha256.min.js"></script>
+	<script src='https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js'></script>
+	
+	<script>
+		document.getElementById('login').addEventListener('submit', function (event) {
+			event.preventDefault(); // 기본 폼 제출 동작을 방지
+
+			const passwordInput = document.getElementById('password');
+			if (passwordInput.value != "") {
+				const hashedPassword = sha256(passwordInput.value).toString();
+
+				// 비밀번호 입력 필드를 해시화된 값으로 덮어씀
+				passwordInput.value = hashedPassword;
+			}
+
+			// 폼을 다시 제출
+			this.submit();
+			passwordInput.value = '';
+		});
+	</script>
+
+	<script type="text/javascript">
+		function showSignUpAlert() {
+			if (confirm("로그인에 실패했습니다. 회원가입 하시겠습니까?")) {
+				window.location.href = '/Account/Register';
+			}
+		}
+	</script>
+	@if (ViewData["LoginFailed"] != null && (bool)ViewData["LoginFailed"])
+	{
+		<script type="text/javascript">
+			showSignUpAlert();
+		</script>
+	}
 }

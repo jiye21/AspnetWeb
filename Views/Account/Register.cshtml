@@ -1,15 +1,49 @@
-﻿@model AspnetWeb.Models.User
+﻿@model AspnetWeb.ViewModel.RegisterViewModel
 
-<form class="login" method="post" asp-controller="Account" asp-action="Register">
-	<div class="title">REGISTER</div>
-	<input type="text" asp-for="UserId" placeholder="사용자 ID 입력" />
+<form class="login" id="login" method="post" asp-controller="Account" asp-action="Register">
+	<h1>Register</h1>
+    <input type="text" asp-for="UserId" placeholder="UserID" />
 	<span class="text-danger" asp-validation-for="UserId"></span>
 
-	<input type="text" asp-for="UserPassword" placeholder="사용자 비밀번호 입력" />
+	<input type="password" id="password" asp-for="UserPassword" placeholder="Password" />
 	<span class="text-danger" asp-validation-for="UserPassword"></span>
 
-	<input type="text" asp-for="UserName" placeholder="사용자 이름 입력" />
-	<span class="text-danger" asp-validation-for="UserName"></span><br />
-
-	<button type="submit">Create</button>
+	<input type="text" asp-for="UserName" placeholder="UserName" />
+	<span class="text-danger" asp-validation-for="UserName"></span>
+    <div class="email-container">
+        <button type="submit">Create</button>
+    </div>
+    <div class="social-container">
+        <p>or use Google for registration</p>
+        <a href="https://localhost:44396/Account/GoogleLogin" class="social"><i class="fab fa-google-plus-g"></i></a>
+    </div>
 </form>
+
+
+@section Scripts {
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/js-sha256/0.9.0/sha256.min.js"></script>
+    <script src='https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js'></script>
+    <script>
+        document.getElementById('login').addEventListener('submit', function (event) {
+            event.preventDefault(); // 기본 폼 제출 동작을 방지
+            
+            const passwordInput = document.getElementById('password');
+            if (passwordInput.value != "") {
+                const hashedPassword = sha256(passwordInput.value).toString();
+
+                // 비밀번호 입력 필드를 해시화된 값으로 덮어씀
+                passwordInput.value = hashedPassword;
+            }
+
+            // 폼을 다시 제출
+            this.submit();
+            passwordInput.value = '';
+        });
+
+        // 구글 로그인 버튼
+        $('.googleBtn').click(function () {
+            $.get('https://localhost:44396/Account/GoogleLogin');
+        });
+
+    </script>
+}

@@ -1,18 +1,19 @@
+@import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css');
+@import url('https://fonts.googleapis.com/css?family=Montserrat:400,800');
+
 
 body {
     background-color: #f45b69;
     margin-bottom: 60px;
-    font-size: 14px;
-    font-family: "Asap", sans-serif;
+    font-family: 'Montserrat', sans-serif;
 }
 
-.title {
-    font-family: "Asap", sans-serif;
-    width: 100%;
-    margin-bottom: 10px;
-    font-weight: 600;
-    font-size: 20px;
+
+h1 {
+    font-weight: bold;
+    margin: 0;
 }
+
 
 .login {
     overflow: hidden;
@@ -65,7 +66,6 @@ body {
 }
 
 .login > input {
-    font-family: "Asap", sans-serif;
     display: block;
     border-radius: 5px;
     font-size: 16px;
@@ -77,7 +77,6 @@ body {
 }
 
 .login > button {
-    font-family: "Asap", sans-serif;
     cursor: pointer;
     color: #fff;
     font-size: 16px;
@@ -96,6 +95,49 @@ body {
 
 .login > button:hover {
     background-color: #f24353;
+}
+
+.email-container > button {
+    cursor: pointer;
+    color: #fff;
+    font-size: 16px;
+    text-transform: uppercase;
+    width: 90px;
+    border: 0;
+    padding: 10px 0;
+    margin-top: 10px;
+    margin-left: -5px;
+    border-radius: 5px;
+    background-color: #f45b69;
+    -webkit-transition: background-color 300ms;
+    -moz-transition: background-color 300ms;
+    transition: background-color 300ms;
+}
+
+.email-container > button:hover {
+    background-color: #f24353;
+}
+
+.social-container {
+
+}
+
+.social-container p {
+    color: #333;
+    font-size: 14px;
+    margin: 15px 0;
+}
+
+.social-container a {
+    text-decoration: none;
+    border: 1px solid #DDDDDD;
+    border-radius: 50%;
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    height: 45px;
+    width: 45px;
+    color: black;
 }
 
 @-webkit-keyframes wawes {

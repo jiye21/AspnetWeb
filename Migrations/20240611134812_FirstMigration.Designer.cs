@@ -3,6 +3,7 @@ using AspnetWeb.DataContext;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace AspnetWeb.Migrations
 {
     [DbContext(typeof(AspnetNoteDbContext))]
-    partial class AspnetNoteDbContextModelSnapshot : ModelSnapshot
+    [Migration("20240611134812_FirstMigration")]
+    partial class FirstMigration
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -73,10 +76,6 @@ namespace AspnetWeb.Migrations
                 {
                     b.Property<int>("UID")
                         .HasColumnType("int");
-
-                    b.Property<string>("GoogleEmail")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("GoogleUID")
                         .IsRequired()

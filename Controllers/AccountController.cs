@@ -1,29 +1,40 @@
-﻿using AspnetWeb.Models;
-using AspnetWeb.ViewModel;
+﻿using AspnetWeb.ViewModel;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Caching.Distributed;
+
+using Google.Apis.Auth.AspNetCore3;
+using Google.Apis.Auth.OAuth2;
+using Google.Apis.Oauth2.v2;
+using Google.Apis.Oauth2.v2.Data;
+using Google.Apis.Services;
+using Google.Apis.Util.Store;
+using Google.Apis.Auth.OAuth2.Flows;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication;
+using Google.Apis.Auth.OAuth2.Responses;
+using Google.Apis.Auth;
+using AspnetWeb.Models;
 
 
 namespace AspnetWeb.Controllers
 {
     public class AccountController : Controller
     {
-		private readonly IDistributedCache _redisCache;
         private readonly IAuthService _authService;
+        private readonly GoogleAuthorizationCodeFlow _flow;
 
         // 생성자 주입을 통한 DI
-		public AccountController(IDistributedCache redisCache, IAuthService authService)
-		{
-			_redisCache = redisCache;
+        public AccountController(IAuthService authService, GoogleAuthorizationCodeFlow flow)
+        {
             _authService = authService;
+            _flow = flow;
         }
 
 
-		/// <summary>
-		/// 로그인
-		/// </summary>
-		/// <returns></returns>
-		[HttpGet]
+        /// <summary>
+        /// 로그인
+        /// </summary>
+        /// <returns></returns>
+        [HttpGet]
         public IActionResult Login()
         {
             ViewData["LoginPage"] = true;
@@ -38,24 +49,14 @@ namespace AspnetWeb.Controllers
         [HttpPost]
         public async Task<IActionResult> Login(LoginViewModel model)
         {
-            if(ModelState.IsValid)
+            if (ModelState.IsValid)
             {
                 var user = await _authService.LoginUserAsync(model);
 
                 // 로그인에 성공했을 때 - 세션 생성
                 if (user != null)
                 {
-                    string sessionKey = Guid.NewGuid().ToString();    // GUID는 매우 난수적이며 중복될 가능성이 매우 낮은 값.
-
-                    var redisOptions = new DistributedCacheEntryOptions();
-                    redisOptions.SetAbsoluteExpiration(TimeSpan.FromSeconds(20));   // 현재를 기준으로 절대 만료 시간을 설정
-                    byte[] userNoBytes = BitConverter.GetBytes(user.UserNo);
-                    _redisCache.Set(sessionKey, userNoBytes, redisOptions);   // redis에 sessionKey 저장, 값은 UID로 해서 어떤 유저인지 식별.
-                                                                             // 세션은 연결된 유저가 누구인지 저장하고 있다. 
-
-                    CookieOptions cookieOptions = new CookieOptions();
-                    cookieOptions.Expires = DateTimeOffset.UtcNow.AddSeconds(20);  // 쿠키도 만료시간 설정
-                    HttpContext.Response.Cookies.Append("SESSION_KEY", sessionKey, cookieOptions); // 클라이언트에게 세션키 전달
+                    _authService.GenerateSession(user.UID);
 
                     return RedirectToAction("LoginSuccess", "Home");    // 로그인 성공 페이지로 이동
                 }
@@ -73,13 +74,11 @@ namespace AspnetWeb.Controllers
 
             if (!string.IsNullOrEmpty(sessionKey) && _authService.IsSessionValid(sessionKey))
             {
-                HttpContext.Response.Cookies.Delete("SESSION_KEY");     // 클라이언트에게 해당 세션 키를 지우도록 쿠키를 전송
-                _redisCache.Remove(sessionKey);   // redis에서도 세션키 삭제
+                _authService.RemoveSession(sessionKey);
 
-			    return RedirectToAction("Index", "Home");
             }
 
-            return null;
+            return RedirectToAction("Index", "Home");
         }
 
         /// <summary>
@@ -98,9 +97,9 @@ namespace AspnetWeb.Controllers
         /// <param name="model"></param>
         /// <returns></returns>
         [HttpPost]
-        public IActionResult Register(User model)
+        public IActionResult Register(RegisterViewModel model)
         {
-            if(ModelState.IsValid)
+            if (ModelState.IsValid)
             {
                 // 계정이 있으면 로그인시키고, 계정 없으면 회원가입 할까요?알림창->구글로 회원가입 시키기.
 
@@ -113,6 +112,23 @@ namespace AspnetWeb.Controllers
             return View(model);
         }
 
+
+        public void GoogleLogin()
+        {
+            // GoogleWebAuthorizationBroker.AuthorizeAsync API 자체가
+            // 인증을 위한 요청 URL에 redirect_uri 파트를 json 파일의 내용으로부터 가져오지 않는다. 
+            // 따라서 ASP.NET 환경에서는 인증 요청에 대한 URL을 직접 작성해야 한다. 
+
+            string rediect_uri = "https://localhost:44396/Home/GoogleUserEmailList";
+
+            var request = _flow.CreateAuthorizationCodeRequest(
+                rediect_uri);    // redirect uri를 포함시켜 google 인증 요청을 위한 url 생성
+            Uri uri = request.Build();
+
+            string authRequestUrl = uri.ToString();
+            Response.Redirect(authRequestUrl);  // Google 인증 페이지가 뜨게 함
+
+        }
 
     }
 }

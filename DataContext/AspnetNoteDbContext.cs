@@ -8,6 +8,19 @@ namespace AspnetWeb.DataContext
     {
         // code first로 테이블 생성
         public DbSet<User> Users { get; set; }
+        public DbSet<AspnetUser> AspnetUsers { get; set; }
+        public DbSet<OAuthUser> OAuthUsers { get; set; }
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<AspnetUser>()
+                .Property(u => u.UID)
+                .ValueGeneratedNever(); // 자동 증가 해제
+
+            base.OnModelCreating(modelBuilder);
+
+
+		}
 
         public DbSet<Note> Notes { get; set; }
         
