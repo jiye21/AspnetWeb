@@ -5,17 +5,14 @@ namespace AspnetWeb.Models
 {
     public class OAuthUser
     {
-        // UID(PK, 공통), Guid, Email
-        /// <summary>
-        /// UID: 공통테이블 User의 UID와 동일한 값
-        /// </summary>
-        [Key]
-        [DatabaseGenerated(DatabaseGeneratedOption.None)] // 자동 생성 해제
-        public int UID { get; set; }
+		// UID(고유식별값), Guid, Email, mUID(User테이블)
+		[Key]
+		public int UID { get; set; }
 
         public string GoogleUID { get; set; }
 
         public string GoogleEmail { get; set; }
 
+        public int MUID { get; set; }
     }
 }

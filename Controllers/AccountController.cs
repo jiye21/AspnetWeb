@@ -1,18 +1,6 @@
 ﻿using AspnetWeb.ViewModel;
 using Microsoft.AspNetCore.Mvc;
-
-using Google.Apis.Auth.AspNetCore3;
-using Google.Apis.Auth.OAuth2;
-using Google.Apis.Oauth2.v2;
-using Google.Apis.Oauth2.v2.Data;
-using Google.Apis.Services;
-using Google.Apis.Util.Store;
 using Google.Apis.Auth.OAuth2.Flows;
-using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Authentication;
-using Google.Apis.Auth.OAuth2.Responses;
-using Google.Apis.Auth;
-using AspnetWeb.Models;
 
 
 namespace AspnetWeb.Controllers
@@ -56,7 +44,7 @@ namespace AspnetWeb.Controllers
                 // 로그인에 성공했을 때 - 세션 생성
                 if (user != null)
                 {
-                    _authService.GenerateSession(user.UID);
+                    _authService.GenerateSession(user.MUID);
 
                     return RedirectToAction("LoginSuccess", "Home");    // 로그인 성공 페이지로 이동
                 }

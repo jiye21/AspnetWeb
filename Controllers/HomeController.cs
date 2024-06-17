@@ -1,19 +1,10 @@
 using AspnetWeb.DataContext;
 using AspnetWeb.Models;
 using Google.Apis.Auth.OAuth2.Flows;
-using Google.Apis.Auth;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Caching.Distributed;
 using System.Diagnostics;
-using Newtonsoft.Json.Linq;
-using Azure.Core;
-using Google.Apis.Auth.OAuth2;
-using Google.Apis.Oauth2.v2;
-using Google.Apis.Services;
-using Google.Apis.Oauth2.v2.Data;
-using Google.Apis.Auth.OAuth2.Responses;
-using Microsoft.EntityFrameworkCore;
-using Google;
+
 
 namespace AspnetWeb.Controllers
 {
@@ -25,7 +16,7 @@ namespace AspnetWeb.Controllers
         private readonly AspnetNoteDbContext _dbContext;
 
         public HomeController(IDistributedCache redisCache, IAuthService authService,
-            GoogleAuthorizationCodeFlow flow, AspnetNoteDbContext dbContext)  //  redisCache라는 이름으로 redis를 사용할것이라는걸 명시
+            GoogleAuthorizationCodeFlow flow, AspnetNoteDbContext dbContext)
 		{
 			_redisCache = redisCache;
             _authService = authService;
@@ -87,6 +78,15 @@ namespace AspnetWeb.Controllers
 
             ViewData["SESSION_KEY"] = string.Empty;  // 내비게이션 바 변경을 위한 ViewData
             ViewData["Page"] = "Google";
+
+            var userInfo = _dbContext.Users.FirstOrDefault(u=>u.UID.Equals(googleUser.MUID));
+
+            if (userInfo != null) 
+            { 
+                ViewData["Name"] = userInfo.UserName;
+            }
+
+            
             return View(googleUser);
         }
 

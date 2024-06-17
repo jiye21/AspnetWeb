@@ -17,5 +17,6 @@ namespace AspnetWeb.Models
         [Required(ErrorMessage ="사용자 이름을 입력하세요. ")]  // Not Null 설정
         public string UserName { get; set; }
 
+        public int LoginType { get; set; }
     }
 }

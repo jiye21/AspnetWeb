@@ -10,6 +10,9 @@ using Microsoft.Extensions.Caching.Distributed;
 using System.Security.Cryptography;
 using System.Text;
 using Google.Apis.Auth.OAuth2.Flows;
+using Microsoft.IdentityModel.Tokens;
+
+
 
 namespace AspnetWeb
 {
@@ -35,11 +38,12 @@ namespace AspnetWeb
         /// <param name="model"></param>
         /// <returns></returns>
         public async Task RegisterUserAsync(RegisterViewModel model)
-        {            
+        {
             var user = new User()
-            { 
-                UserName = model.UserName
-            };
+            {
+                UserName = model.UserName,
+				LoginType = 1
+			};
 
             var aspnetUser = new AspnetUser()
             {
@@ -48,10 +52,10 @@ namespace AspnetWeb
             };
             aspnetUser.UserPassword = SHA256Hash(aspnetUser.Salt + model.UserPassword);  // 패스워드 해시화
 
-            await _dbContext.Users.AddAsync(user); 
+            await _dbContext.Users.AddAsync(user);
             _dbContext.SaveChanges();  // 기본 키 값이 설정됨
 
-            aspnetUser.UID = user.UID;
+            aspnetUser.MUID = user.UID;
             await _dbContext.AspnetUsers.AddAsync(aspnetUser);
             _dbContext.SaveChanges();
 
@@ -66,7 +70,7 @@ namespace AspnetWeb
         {
             var userInfo = await _dbContext.AspnetUsers
                 .FirstOrDefaultAsync(u => u.UserId.Equals(model.UserId));
-			if (userInfo == null)
+            if (userInfo == null)
             {
                 return null;
             }
@@ -75,7 +79,7 @@ namespace AspnetWeb
 
             var user = await _dbContext.AspnetUsers
                 .FirstOrDefaultAsync(u => u.UserPassword.Equals(password));
-            if(user != null)
+            if (user != null)
             {
                 return user;
             }
@@ -92,7 +96,7 @@ namespace AspnetWeb
         {
             var redisOptions = new DistributedCacheEntryOptions();
             redisOptions.SetAbsoluteExpiration(TimeSpan.FromSeconds(20));
-            
+
             _redisCache.Set(sessionKey, userNoBytes, redisOptions);
 
             CookieOptions cookieOptions = new CookieOptions();
@@ -108,11 +112,16 @@ namespace AspnetWeb
         /// <returns></returns>
         public bool IsSessionValid(string sessionKey)
         {
-            if (!string.IsNullOrEmpty(sessionKey) && _redisCache.Get(sessionKey) != null)
+            if (!string.IsNullOrEmpty(sessionKey))
             {
-                UpdateSessionAndCookie(sessionKey, _redisCache.Get(sessionKey));  // 세션이 유효하다면 갱신해줌
+                var sessionValue = _redisCache.Get(sessionKey);
 
-                return true;
+                if(sessionValue != null)
+                {
+				    UpdateSessionAndCookie(sessionKey, sessionValue);  // 세션이 유효하다면 갱신해줌
+
+                    return true;
+                }
             }
             return false;
         }
@@ -153,6 +162,66 @@ namespace AspnetWeb
         /// <returns></returns>
         public async Task<OAuthUser> GetGoogleUser(string code)
         {
+            var accessToken = GetAccessToken(code);
+
+            if (accessToken.IsNullOrEmpty())  // 토큰을 정상적으로 받아오지 못했을 때
+            {
+                return null;
+            }
+
+            // 토큰을 정상적으로 받아옴 - 사용자 정보를 DB에 저장하거나 세션에 저장.
+            var oauth2Service = new Oauth2Service(new BaseClientService.Initializer()
+            {
+                HttpClientInitializer = GoogleCredential.FromAccessToken(accessToken),
+            });
+
+            Userinfo userInfo = await oauth2Service.Userinfo.Get().ExecuteAsync();
+
+            var oAuthUser = new OAuthUser()
+            {
+                GoogleEmail = userInfo.Email,
+                GoogleUID = userInfo.Id
+            };
+
+            // Guid (UserInfo.Id)로 유저 검색
+            var userExists = await _dbContext.OAuthUsers
+                .FirstOrDefaultAsync(u => u.GoogleUID.Equals(oAuthUser.GoogleUID));
+
+            // 이미 데이터베이스에 유저가 존재할때 - 세션 생성 후 바로 기존 유저정보 리턴
+            if (userExists != null)
+            {
+                GenerateSession(userExists.MUID);
+
+                return userExists;
+            }
+
+            // 데이터베이스에 구글유저 저장 - User 테이블, OAuth 테이블 두군데에 저장
+            var user = new User()
+            {
+                UserName = userInfo.Name,
+                LoginType = 2
+            };
+            await _dbContext.Users.AddAsync(user);
+            _dbContext.SaveChanges();  // 기본 키 값이 설정됨 (=User.UID 생성)
+
+            oAuthUser.MUID = user.UID;
+            await _dbContext.OAuthUsers.AddAsync(oAuthUser);
+
+            _dbContext.SaveChanges();
+
+            GenerateSession(oAuthUser.MUID);
+
+            return oAuthUser;
+
+        }
+
+        /// <summary>
+        /// Access Token 가져오기
+        /// </summary>
+        /// <param name="code"></param>
+        /// <returns></returns>
+        public string GetAccessToken(string code)
+        {
             try
             {
                 var tokenResponse = _flow.ExchangeCodeForTokenAsync(null, code,
@@ -160,54 +229,14 @@ namespace AspnetWeb
 
                 var accessToken = tokenResponse.AccessToken;
 
-                // 토큰을 정상적으로 받아옴 - 사용자 정보를 DB에 저장하거나 세션에 저장.
-                var oauth2Service = new Oauth2Service(new BaseClientService.Initializer()
-                {
-                    HttpClientInitializer = GoogleCredential.FromAccessToken(accessToken),
-                });
-
-                Userinfo userInfo = await oauth2Service.Userinfo.Get().ExecuteAsync();
-
-                var oAuthUser = new OAuthUser()
-                {
-                    GoogleEmail = userInfo.Email,
-                    GoogleUID = userInfo.Id
-                };
-
-                // Guid (UserInfo.Id)로 유저 검색
-                var userExists = await _dbContext.OAuthUsers
-                    .FirstOrDefaultAsync(u => u.GoogleUID.Equals(oAuthUser.GoogleUID));
-
-                // 이미 데이터베이스에 유저가 존재할때 - 세션 생성 후 바로 유저정보 리턴
-                if (userExists != null)
-                {
-                    GenerateSession(oAuthUser.UID);
-
-                    return oAuthUser;
-                }
-
-                // 데이터베이스에 구글유저 저장 - User 테이블, OAuth 테이블 두군데에 저장
-                var user = new User()
-                {
-                    UserName = userInfo.Name
-                };
-                await _dbContext.Users.AddAsync(user);
-                await _dbContext.SaveChangesAsync();  // 기본 키 값이 설정됨 (=User.UID 생성)
-
-                oAuthUser.UID = user.UID;
-                await _dbContext.OAuthUsers.AddAsync(oAuthUser);
-
-                _dbContext.SaveChanges();
-
-                GenerateSession(oAuthUser.UID);
-
-                return oAuthUser;
+                return accessToken;
             }
             catch (Exception ex)   // 토큰을 정상적으로 받아오지 못했을 때
             {
                 return null;
             }
         }
+
 
         /// <summary>
         /// SHA256 해시 함수
