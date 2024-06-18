@@ -28,7 +28,7 @@ namespace AspnetWeb.Controllers
         {
             string sessionKey = HttpContext.Request.Cookies["SESSION_KEY"];
 
-            if (_authService.IsSessionValid(sessionKey))
+            if (RequestAuthMiddleware.Session)
             {
                 ViewData["SESSION_KEY"] = sessionKey;  // 내비게이션 바 변경을 위한 ViewData
             }
@@ -41,22 +41,24 @@ namespace AspnetWeb.Controllers
             // 세션이 없다면 다시 로그인 페이지로 이동시키기.
             // 바로 이 주소로 들어온다면 접속이 가능하기때문.
 
-            string sessionKey = HttpContext.Request.Cookies["SESSION_KEY"];
+			if (RequestAuthMiddleware.Session)  // 세션 검증
+			{
+                // 세션 갱신
+                string sessionKey = HttpContext.Request.Cookies["SESSION_KEY"];
+				var sessionValue = _redisCache.Get(sessionKey);
+                _authService.UpdateSessionAndCookie(sessionKey, sessionValue);
 
-            if (_authService.IsSessionValid(sessionKey))  // 세션 검증
-            {
-                var sessionValue = _redisCache.Get(sessionKey);
-                int userNo = BitConverter.ToInt32(sessionValue);
-                ViewData["USER_NO"] = userNo;
+				int userNo = BitConverter.ToInt32(sessionValue);
+				ViewData["USER_NO"] = userNo;
 
-                ViewData["SESSION_KEY"] = sessionKey;  // 내비게이션 바 변경을 위한 ViewData
-                ViewData["Page"] = "LoginSuccess";
-                return View();
+				ViewData["SESSION_KEY"] = sessionKey;  // 내비게이션 바 변경을 위한 ViewData
+				ViewData["Page"] = "LoginSuccess";
+				return View();
 			}
 
-            // redis에 세션이 없거나 쿠키가 만료되었을때
-            return RedirectToAction("Login", "Account");
-        }
+			// redis에 세션이 없거나 쿠키가 만료되었을때
+			return RedirectToAction("Login", "Account");
+		}
 
         // 인증 코드를 성공적으로 교환하여 액세스 토큰을 받아오면
         // 이는 사용자가 성공적으로 인증되고 회원가입이 완료되었음을 의미
@@ -94,17 +96,19 @@ namespace AspnetWeb.Controllers
         {
             // 세션이 없다면 다시 로그인 페이지로 이동시키기.
             // 바로 이 주소로 들어온다면 접속이 가능하기때문.
-            string sessionKey = HttpContext.Request.Cookies["SESSION_KEY"];
 
-            if (_authService.IsSessionValid(sessionKey))  // 세션 검증
+            if (RequestAuthMiddleware.Session)
             {
+				// 세션 갱신
+				string sessionKey = HttpContext.Request.Cookies["SESSION_KEY"];
+				var sessionValue = _redisCache.Get(sessionKey);
+				_authService.UpdateSessionAndCookie(sessionKey, sessionValue);
 
-                ViewData["SESSION_KEY"] = string.Empty;  // 내비게이션 바 변경을 위한 ViewData
+				ViewData["SESSION_KEY"] = string.Empty;  // 내비게이션 바 변경을 위한 ViewData
                 ViewData["Page"] = "MyPage";
                 return View();
             }
 
-            // redis에 세션이 없거나 쿠키가 만료되었을때
             return RedirectToAction("Login", "Account");
         }
 

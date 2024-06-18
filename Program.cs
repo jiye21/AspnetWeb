@@ -1,11 +1,7 @@
 using AspnetWeb;
-using Google.Apis.Auth.AspNetCore3;
 using Google.Apis.Auth.OAuth2.Flows;
 using Google.Apis.Auth.OAuth2;
-using Microsoft.AspNetCore.Authentication.Cookies;
 using Google.Apis.Oauth2.v2;
-using Google;
-using Microsoft.EntityFrameworkCore;
 using AspnetWeb.DataContext;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -58,13 +54,12 @@ if (!app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 
-// application에서 session을 사용하겠다. 
-app.UseSession();
-
 app.UseRouting();
 
 app.UseAuthentication();
 app.UseAuthorization();
+
+app.UseRequestAuth(); // 사용자 정의 미들웨어
 
 app.MapControllerRoute(
     name: "default",

@@ -58,12 +58,10 @@ namespace AspnetWeb.Controllers
 
         public IActionResult Logout()
         {
-            string sessionKey = HttpContext.Request.Cookies["SESSION_KEY"];  // 클라이언트의 쿠키를 받아옴
-
-            if (!string.IsNullOrEmpty(sessionKey) && _authService.IsSessionValid(sessionKey))
+            if (RequestAuthMiddleware.Session)
             {
+                string sessionKey = HttpContext.Request.Cookies["SESSION_KEY"];  // 클라이언트의 쿠키를 받아옴
                 _authService.RemoveSession(sessionKey);
-
             }
 
             return RedirectToAction("Index", "Home");

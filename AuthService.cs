@@ -105,26 +105,6 @@ namespace AspnetWeb
             _httpContextAccessor.HttpContext.Response.Cookies.Append("SESSION_KEY", sessionKey, cookieOptions);
         }
 
-        /// <summary>
-        /// 세션 검증
-        /// </summary>
-        /// <param name="sessionKey"></param>
-        /// <returns></returns>
-        public bool IsSessionValid(string sessionKey)
-        {
-            if (!string.IsNullOrEmpty(sessionKey))
-            {
-                var sessionValue = _redisCache.Get(sessionKey);
-
-                if(sessionValue != null)
-                {
-				    UpdateSessionAndCookie(sessionKey, sessionValue);  // 세션이 유효하다면 갱신해줌
-
-                    return true;
-                }
-            }
-            return false;
-        }
 
         /// <summary>
         /// 세션 생성
