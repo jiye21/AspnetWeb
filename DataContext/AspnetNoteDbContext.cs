@@ -11,11 +11,36 @@ namespace AspnetWeb.DataContext
         public DbSet<AspnetUser> AspnetUsers { get; set; }
         public DbSet<OAuthUser> OAuthUsers { get; set; }
 
+		protected override void OnModelCreating(ModelBuilder modelBuilder)
+		{
+			base.OnModelCreating(modelBuilder);
 
-        // migration 후 DB를 생성하는 UpdateDatabase 명령을 수행하면 DB가 생성된다. 
-        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+			modelBuilder.Entity<User>()
+				.Property(u => u.UID)
+				.HasColumnType("bigint");
+
+			modelBuilder.Entity<AspnetUser>()
+				.Property(u => u.MUID)
+				.HasColumnType("bigint");
+
+			modelBuilder.Entity<OAuthUser>()
+				.Property(u => u.MUID)
+				.HasColumnType("bigint");
+
+			modelBuilder.Entity<AspnetUser>()
+				.Property(u => u.UID)
+				.HasColumnType("bigint");
+
+			modelBuilder.Entity<OAuthUser>()
+				.Property(u => u.UID)
+				.HasColumnType("bigint");
+		}
+
+
+		// migration 후 DB를 생성하는 UpdateDatabase 명령을 수행하면 DB가 생성된다. 
+		protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
             optionsBuilder.UseSqlServer(@"Server=localhost\SQLEXPRESS;Database=AspnetNoteDb;User Id=sa;Password=test1234;Encrypt=false;");
         }
-    }
+	}
 }

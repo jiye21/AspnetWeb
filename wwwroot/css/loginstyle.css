@@ -104,7 +104,9 @@ h1 {
     text-transform: uppercase;
     width: 90px;
     border: 0;
-    padding: 10px 0;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    padding-right: 15px;
     margin-top: 10px;
     margin-left: -5px;
     border-radius: 5px;

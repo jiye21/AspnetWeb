@@ -3,6 +3,7 @@ using AspnetWeb.DataContext;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace AspnetWeb.Migrations
 {
     [DbContext(typeof(AspnetNoteDbContext))]
-    partial class AspnetNoteDbContextModelSnapshot : ModelSnapshot
+    [Migration("20240619132459_UpdateUIDToBigInt")]
+    partial class UpdateUIDToBigInt
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -23,11 +26,11 @@ namespace AspnetWeb.Migrations
 
             modelBuilder.Entity("AspnetWeb.Models.AspnetUser", b =>
                 {
-                    b.Property<long>("UID")
+                    b.Property<int>("UID")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
+                        .HasColumnType("int");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("UID"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("UID"));
 
                     b.Property<long>("MUID")
                         .HasColumnType("bigint");
@@ -51,11 +54,11 @@ namespace AspnetWeb.Migrations
 
             modelBuilder.Entity("AspnetWeb.Models.OAuthUser", b =>
                 {
-                    b.Property<long>("UID")
+                    b.Property<int>("UID")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
+                        .HasColumnType("int");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("UID"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("UID"));
 
                     b.Property<string>("GoogleEmail")
                         .IsRequired()

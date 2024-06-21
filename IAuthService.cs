@@ -8,7 +8,7 @@ namespace AspnetWeb
         Task RegisterUserAsync(RegisterViewModel model);
         Task<AspnetUser> LoginUserAsync(LoginViewModel model);
         void UpdateSessionAndCookie(string sessionKey, byte[] userNoBytes);
-        void GenerateSession(int uid);
+        void GenerateSession(long uid);
         void RemoveSession(string sessionKey);
         Task<OAuthUser> GetGoogleUser(string code);
     }

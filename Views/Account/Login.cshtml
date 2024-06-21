@@ -12,6 +12,7 @@
 
 	<div class="email-container">
 		<button type="submit">Login</button>
+		<button type="button" id="jwtLoginButton">JWT Login</button>
 	</div>
 	<div class="social-container">
 		<p>or use Google for Login</p>
@@ -37,6 +38,26 @@
 
 			// 폼을 다시 제출
 			this.submit();
+			passwordInput.value = '';
+		});
+
+		document.getElementById('jwtLoginButton').addEventListener('click', function (event) {
+			event.preventDefault(); // 기본 클릭 동작을 방지
+
+			const passwordInput = document.getElementById('password');
+			if (passwordInput.value != "") {
+				const hashedPassword = sha256(passwordInput.value).toString();
+
+				passwordInput.value = hashedPassword;
+			}
+
+			// 폼의 action 속성 변경
+			document.getElementById('login').action = '/account/jwtlogin';
+
+			// 폼을 제출
+			document.getElementById('login').submit();
+
+			// 비밀번호 입력 필드 초기화
 			passwordInput.value = '';
 		});
 	</script>

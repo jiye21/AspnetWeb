@@ -1,6 +1,10 @@
 ﻿using AspnetWeb.ViewModel;
 using Microsoft.AspNetCore.Mvc;
 using Google.Apis.Auth.OAuth2.Flows;
+using System.Security.Claims;
+using System.IdentityModel.Tokens.Jwt;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 
 
 namespace AspnetWeb.Controllers
@@ -9,12 +13,15 @@ namespace AspnetWeb.Controllers
     {
         private readonly IAuthService _authService;
         private readonly GoogleAuthorizationCodeFlow _flow;
+		private readonly IConfiguration _config;
 
-        // 생성자 주입을 통한 DI
-        public AccountController(IAuthService authService, GoogleAuthorizationCodeFlow flow)
+		// 생성자 주입을 통한 DI
+		public AccountController(IAuthService authService, GoogleAuthorizationCodeFlow flow,
+			IConfiguration config)
         {
             _authService = authService;
             _flow = flow;
+            _config = config;
         }
 
 
@@ -56,7 +63,63 @@ namespace AspnetWeb.Controllers
             return View(model);
         }
 
-        public IActionResult Logout()
+
+        /// <summary>
+        /// 로그인 후 세션이 아닌 JWT발급
+        /// </summary>
+        /// <param name="model"></param>
+        /// <returns></returns>
+		[Route("/account/jwtlogin")]
+		[HttpPost]
+		public async Task<IActionResult> GenerateJWT(LoginViewModel model)
+		{
+			if (ModelState.IsValid)
+			{
+				var user = await _authService.LoginUserAsync(model);
+
+				// JWT 발급 - 로그인에 성공했을 때
+				if (user != null)
+				{
+                    // 비밀키 생성 후 Signature 필드 생성
+                    var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["JWT:SecretKey"]));
+                    var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
+                    var claims = new List<Claim>
+                    {
+                        new Claim(ClaimTypes.NameIdentifier, user.MUID.ToString()),  // UID
+                        new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),  // jwt 고유 식별자. 토큰 중복 방지를 위함
+
+                    };
+
+                    var token = new JwtSecurityToken(
+                        issuer: _config["JWT:Issuer"],    
+                        audience: _config["JWT:Audience"],
+                        claims: claims,
+                        expires: DateTime.Now.AddMinutes(2),
+                        signingCredentials: credentials
+                    );
+
+                    string accessToken = new JwtSecurityTokenHandler().WriteToken(token);
+					var cookieOptions = new CookieOptions
+					{
+						HttpOnly = true, // HTTPOnly 속성을 설정하여 클라이언트 측 JavaScript에서 접근할 수 없게 함
+						Secure = true, // HTTPS에서만 쿠키 전송을 허용 (SSL/TLS를 사용해야 함)
+					};
+					HttpContext.Response.Cookies.Append("ACCESS_TOKEN", accessToken, cookieOptions);
+
+
+                    return Redirect("https://localhost:44396/api/JWTPage");
+				}
+			}
+
+
+			// 로그인 실패
+			ViewData["LoginPage"] = true;
+			ViewData["LoginFailed"] = true;
+			return View(model);
+		}
+
+
+		public IActionResult Logout()
         {
             if (RequestAuthMiddleware.Session)
             {

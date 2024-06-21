@@ -7,7 +7,7 @@ namespace AspnetWeb.Models
     {
         // UID, ID, PW, Salt, muid
         [Key]
-        public int UID { get; set; }
+        public long UID { get; set; }
 
         [Required(ErrorMessage = "사용자 ID를 입력하세요. ")]  // Not Null 설정
         public string UserId { get; set; }
@@ -17,6 +17,6 @@ namespace AspnetWeb.Models
 
         public string Salt { get; set; }
 
-        public int MUID { get; set; }
+        public long MUID { get; set; }
     }
 }

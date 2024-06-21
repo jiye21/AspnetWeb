@@ -110,7 +110,7 @@ namespace AspnetWeb
         /// 세션 생성
         /// </summary>
         /// <param name="uid"></param>
-        public void GenerateSession(int uid)
+        public void GenerateSession(long uid)
         {
             string sessionKey = Guid.NewGuid().ToString();    // GUID는 매우 난수적이며 중복될 가능성이 매우 낮은 값.
 
@@ -205,7 +205,7 @@ namespace AspnetWeb
             try
             {
                 var tokenResponse = _flow.ExchangeCodeForTokenAsync(null, code,
-                        "https://localhost:44396/Home/GoogleUserEmailList", CancellationToken.None).Result;
+						"https://localhost:44396/Home/GoogleUserEmailList", CancellationToken.None).Result;
 
                 var accessToken = tokenResponse.AccessToken;
 

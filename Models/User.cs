@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace AspnetWeb.Models
 {
@@ -9,7 +10,7 @@ namespace AspnetWeb.Models
         /// 사용자 번호
         /// </summary>
         [Key]   // PK 설정
-        public int UID { get; set; }
+		public long UID { get; set; }
 
         /// <summary>
         /// 사용자 이름
