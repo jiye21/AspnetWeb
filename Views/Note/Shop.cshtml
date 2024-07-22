@@ -1,0 +1,161 @@
+﻿@model List<AspnetWeb.Models.ShoppingList>
+
+<h1>Shop</h1>
+<table class="rwd-table">
+	<tr>
+		<th>Product</th>
+		<th>Count</th>
+		<th>Price</th>
+	</tr>
+	<tr>
+		<td data-th="Product">
+			<span id='product1'>Corn</span>
+		</td>
+		<td data-th="Count">
+			<span class="left">
+				<button onclick='count("plus1")'>+</button>
+			</span>
+			<span id='result1'>0</span>
+			<span class="right">
+				<button onclick='count("minus1")'>-</button>
+			</span>
+		</td>
+		<td data-th="Price">
+			<span id='price1'>0</span>
+		</td>
+		<td data-th="Price">
+			<button onclick='sendData("1")'>Buy</button>
+		</td>
+	</tr>
+	<tr>
+		<td data-th="Product">
+			<span id='product2'>Cucumber</span>
+		</td>
+		<td data-th="Count">
+			<span class="left">
+				<button onclick='count("plus2")'>+</button>
+			</span>
+			<span id='result2'>0</span>
+			<span class="right">
+				<button onclick='count("minus2")'>-</button>
+			</span>
+		</td>
+		<td data-th="Price">
+			<span id='price2'>0</span>
+		</td>
+		<td data-th="Price">
+			<button onclick='sendData("2")'>Buy</button>
+		</td>
+	</tr>
+	<tr>
+		<td data-th="Product">
+			<span id='product3'>Rainboots</span>
+		</td>
+		<td data-th="Count">
+			<span class="left">
+				<button onclick='count("plus3")'>+</button>
+			</span>
+			<span id='result3'>0</span>
+			<span class="right">
+				<button onclick='count("minus3")'>-</button>
+			</span>
+		</td>
+		<td data-th="Price">
+			<span id='price3'>0</span>
+		</td>
+		<td data-th="Price">
+			<button onclick='sendData("3")'>Buy</button>
+		</td>
+	</tr>
+</table>
+
+
+<br />
+
+<h1>Shopping List</h1>
+<table class="rwd-table">
+	<tr>
+		<th>Product</th>
+		<th>Count</th>
+		<th>Price</th>
+		<th>PurchaseDate</th>
+	</tr>
+	@if (Model != null)
+	{
+		@for (int i = 0; i < Model.Count; i++)
+		{
+			<tr>
+				<td data-th="Product">@Model[i].Product</td>
+				<td data-th="Count">@Model[i].Count</td>
+				<td data-th="Price">@Model[i].Price</td>
+				<td data-th="PurchaseDate">@Model[i].PurchaseDate</td>
+			</tr>
+		}
+	}
+</table>
+
+@section Scripts {
+	<script>
+		function count(type) {
+			// 마지막 문자열 추출
+			let lastChar = type.slice(-1);
+
+			// 결과를 표시할 element
+			const resultElement = document.getElementById('result' + lastChar);
+			const priceElement = document.getElementById('price' + lastChar);
+
+			// 현재 화면에 표시된 값
+			let number = resultElement.innerText;
+			let price = 1977;
+
+			// 더하기/빼기
+			if (type.slice(0, -1) == 'plus') {
+				number = parseInt(number) + 1;
+				price = price * parseInt(number);
+			}
+			else if (type.slice(0, -1) == 'minus') {
+				if (parseInt(number) <= 0) {
+					number = 0;
+					price = 0;
+				}
+				else {
+					number = parseInt(number) - 1;
+					price = price * parseInt(number);
+				}
+			}
+
+			// 결과 출력
+			resultElement.innerText = number;
+			priceElement.innerText = price;
+		}
+
+
+		async function sendData(order) {
+			const productname = document.getElementById('product' + order).innerText;
+			const count = document.getElementById('result' + order).innerText;
+			const price = document.getElementById('price' + order).innerText;
+			const time = new Date();
+			const isotime = time.toISOString();
+
+
+			await fetch('https://localhost:44396/api/Note/ShoppingList', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify({
+					Product: productname,
+					Count: parseInt(count),
+					Price: parseInt(price),
+					PurchaseDate: isotime
+				}),
+			});
+
+			location.reload();
+		}
+	</script>
+
+
+}
+
+

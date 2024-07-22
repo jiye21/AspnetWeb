@@ -1,6 +1,5 @@
 using AspnetWeb.DataContext;
 using AspnetWeb.Models;
-using Google.Apis.Auth.OAuth2.Flows;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Caching.Distributed;
 using System.Diagnostics;
@@ -8,7 +7,7 @@ using System.Diagnostics;
 
 namespace AspnetWeb.Controllers
 {
-    public class HomeController : Controller
+	public class HomeController : Controller
     {
 		private readonly IDistributedCache _redisCache;
         private readonly IAuthService _authService;
@@ -24,36 +23,39 @@ namespace AspnetWeb.Controllers
 
 		public IActionResult Index()
         {
-            if (RequestAuthMiddleware.Session)
-            {
-                ViewData["SESSION_KEY"] = string.Empty;  // 내비게이션 바 변경을 위한 ViewData
-            }
-
             return View();
         }
 
-        public IActionResult LoginSuccess()
+		[Route("/api/Home/MemberIndex")]
+		public IActionResult MemberIndex()
+        {
+			ViewData["SESSION_KEY"] = string.Empty;  // 내비게이션 바 변경을 위한 ViewData
+			
+            return View();
+		}
+
+		[Route("/api/LoginSuccess")]
+		public IActionResult LoginSuccess()
         {
             // 세션이 없다면 다시 로그인 페이지로 이동시키기.
             // 바로 이 주소로 들어온다면 접속이 가능하기때문.
+            // 현재 미들웨어에서 세션 체크중
 
-			if (RequestAuthMiddleware.Session)  // 세션 검증
+            // 세션 갱신
+            string sessionKey = HttpContext.Request.Cookies["SESSION_KEY"];
+            long userNo = 0;
+			if (!string.IsNullOrEmpty(sessionKey))
 			{
-                // 세션 갱신
-                string sessionKey = HttpContext.Request.Cookies["SESSION_KEY"];
 				var sessionValue = _redisCache.Get(sessionKey);
-                _authService.UpdateSessionAndCookie(sessionKey, sessionValue);
-
-				int userNo = BitConverter.ToInt32(sessionValue);
-				ViewData["USER_NO"] = userNo;
-
-				ViewData["SESSION_KEY"] = sessionKey;  // 내비게이션 바 변경을 위한 ViewData
-				ViewData["Page"] = "LoginSuccess";
-				return View();
+				_authService.UpdateSessionAndCookie(sessionKey, sessionValue);
+			    userNo = BitConverter.ToInt64(sessionValue);
 			}
 
-			// redis에 세션이 없거나 쿠키가 만료되었을때
-			return RedirectToAction("Login", "Account");
+			ViewData["USER_NO"] = userNo;
+
+			ViewData["SESSION_KEY"] = sessionKey;  // 내비게이션 바 변경을 위한 ViewData
+			ViewData["Page"] = "LoginSuccess";
+			return View();
 		}
 
         /// <summary>
@@ -100,25 +102,26 @@ namespace AspnetWeb.Controllers
             return View(googleUser);
         }
 
-        public IActionResult MyPage()
+        // 해당 경로(/api/MyPage)로 함수 실행과 컨트롤러 실행을 통한 함수 실행 둘 다 가능
+		[Route("/api/MyPage")]
+		public IActionResult MyPage()
         {
             // 세션이 없다면 다시 로그인 페이지로 이동시키기.
             // 바로 이 주소로 들어온다면 접속이 가능하기때문.
+            // 현재 미들웨어에서 세션 체크중
 
-            if (RequestAuthMiddleware.Session)
+		    // 세션로그인일 시 세션 갱신
+		    string sessionKey = HttpContext.Request.Cookies["SESSION_KEY"];
+            if(!string.IsNullOrEmpty(sessionKey))
             {
-				// 세션 갱신
-				string sessionKey = HttpContext.Request.Cookies["SESSION_KEY"];
-				var sessionValue = _redisCache.Get(sessionKey);
-				_authService.UpdateSessionAndCookie(sessionKey, sessionValue);
-
-				ViewData["SESSION_KEY"] = string.Empty;  // 내비게이션 바 변경을 위한 ViewData
-                ViewData["Page"] = "MyPage";
-                return View();
+		        var sessionValue = _redisCache.Get(sessionKey);
+		        _authService.UpdateSessionAndCookie(sessionKey, sessionValue);
             }
 
+		    ViewData["SESSION_KEY"] = string.Empty;  // 내비게이션 바 변경을 위한 ViewData
+            ViewData["Page"] = "MyPage";
+            return View();
 
-            return RedirectToAction("Login", "Account");
         }
 
 

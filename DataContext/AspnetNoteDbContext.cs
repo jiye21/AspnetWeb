@@ -10,8 +10,10 @@ namespace AspnetWeb.DataContext
         public DbSet<User> Users { get; set; }
         public DbSet<AspnetUser> AspnetUsers { get; set; }
         public DbSet<OAuthUser> OAuthUsers { get; set; }
+        public DbSet<ShoppingList> ShoppingList { get; set; }
 
-		protected override void OnModelCreating(ModelBuilder modelBuilder)
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
 		{
 			base.OnModelCreating(modelBuilder);
 
@@ -19,21 +21,37 @@ namespace AspnetWeb.DataContext
 				.Property(u => u.UID)
 				.HasColumnType("bigint");
 
-			modelBuilder.Entity<AspnetUser>()
-				.Property(u => u.MUID)
+			modelBuilder.Entity<AspnetUser>(entity=>
+			{
+				entity.Property(u => u.MUID)
 				.HasColumnType("bigint");
 
-			modelBuilder.Entity<OAuthUser>()
-				.Property(u => u.MUID)
+				entity.Property(u => u.UID)
+				.HasColumnType("bigint");
+			});
+
+			modelBuilder.Entity<OAuthUser>(entity =>
+			{
+				entity.Property(u => u.MUID)
 				.HasColumnType("bigint");
 
-			modelBuilder.Entity<AspnetUser>()
-				.Property(u => u.UID)
+				entity.Property(u => u.UID)
+				.HasColumnType("bigint");
+			});
+
+
+			modelBuilder.Entity<ShoppingList>(entity =>
+			{
+				entity.Property(u => u.MUID)
 				.HasColumnType("bigint");
 
-			modelBuilder.Entity<OAuthUser>()
-				.Property(u => u.UID)
+				entity.Property(u => u.UID)
 				.HasColumnType("bigint");
+
+				entity.Property(u => u.PurchaseDate)
+				.HasColumnType("datetimeoffset");
+			});
+
 		}
 
 

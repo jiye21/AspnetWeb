@@ -88,13 +88,15 @@ app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
 
-// JWT 인증 체크 Middleware 추가, [api] 컨트롤러만 적용
+
+// 세션, JWT 인증 체크 Middleware 추가, [api] 컨트롤러만 적용
 app.UseWhen(context => context.Request.Path.StartsWithSegments("/api"), appBuilder =>
 {
-	appBuilder.UseMiddleware<JwtMiddleware>();
+	// 세션, JWT 체크 미들웨어
+	appBuilder.UseMiddleware<RequestAuthMiddleware>(); // 사용자 정의 미들웨어
 });
 
-app.UseRequestAuth(); // 사용자 정의 미들웨어
+
 
 app.MapControllerRoute(
     name: "default",

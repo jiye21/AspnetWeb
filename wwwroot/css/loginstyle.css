@@ -76,6 +76,31 @@ h1 {
     margin: 15px -10px;
 }
 
+.left > button {
+    cursor: pointer;
+    color: #fff;
+    text-transform: uppercase;
+    width: 80px;
+    border: 0;
+    padding: 10px 0;
+    border-radius: 5px;
+    background-color: #f45b69;
+    margin-right: 1em;
+}
+
+.right > button {
+    cursor: pointer;
+    color: #fff;
+    text-transform: uppercase;
+    width: 80px;
+    border: 0;
+    padding: 10px 0;
+    border-radius: 5px;
+    background-color: #f45b69;
+    margin-left: 1em;
+}
+
+
 .login > button {
     cursor: pointer;
     color: #fff;

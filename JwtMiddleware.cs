@@ -11,8 +11,7 @@ namespace AspnetWeb
 	{
 		private readonly RequestDelegate _next;
 		private readonly IConfiguration _configuration;
-		private const string _ID_ = "xxxService";
-		private const string APIKEYNAME = "ACCESS_TOKEN"; // HTTP 요청에서 인증 정보를 전달하기 위해 예약된 헤더
+		//private const string APIKEYNAME = "Authorization"; // Authorization: HTTP 요청에서 인증 정보를 전달하기 위해 예약된 헤더
 
 		public JwtMiddleware(RequestDelegate next, IConfiguration configuration)
 		{
