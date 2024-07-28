@@ -1,9 +1,11 @@
-﻿using Azure.Core;
+﻿using AspnetWeb.DataContext;
+using Azure.Core;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
 using StackExchange.Redis;
+using System;
 using System.IdentityModel.Tokens.Jwt;
 using System.Net;
 using System.Text;
@@ -17,43 +19,25 @@ namespace AspnetWeb
 		private readonly IConfiguration _configuration;
 
 
-
-		public RequestAuthMiddleware(RequestDelegate next, IDistributedCache redisCache, IConfiguration configuration)
+		public RequestAuthMiddleware(RequestDelegate next, IDistributedCache redisCache, 
+			IConfiguration configuration)
 		{
 			_next = next;
 			_redisCache = redisCache;
 			_configuration = configuration;
-
 		}
 
-		public async Task InvokeAsync(HttpContext context)
+		public async Task InvokeAsync(HttpContext context, IAuthService authService)
 		{
-			// 세션 검증
+			// 세션 검증 후 업데이트
 			string sessionKey = context.Request.Cookies["SESSION_KEY"];
-			/*
-			if (string.IsNullOrEmpty(sessionKey))
-			{
-				context.Response.StatusCode = StatusCodes.Status401Unauthorized;
-				await context.Response.WriteAsync("sessionkey not found");
-				return;
-			}
-
-			var sessionValue = _redisCache.Get(sessionKey);
-			if (sessionValue == null)
-			{
-				//Session = true;
-				context.Response.StatusCode = StatusCodes.Status401Unauthorized;
-				await context.Response.WriteAsync("Invalid sessionkey");
-				return;
-			}
-			Session = false;
-			*/
 
 			if (!string.IsNullOrEmpty(sessionKey))
 			{
 				var sessionValue = _redisCache.Get(sessionKey);
 				if (sessionValue != null)
 				{
+					authService.UpdateSessionAndCookie(sessionKey, sessionValue);
 					await _next(context);
 					return;
 				}
@@ -62,6 +46,7 @@ namespace AspnetWeb
 
 
 			// 세션이 아닐경우 JWT 검증
+			/*
 			string accessToken = context.Request.Cookies["AccessToken"];
             if (string.IsNullOrEmpty(accessToken))
             {
@@ -75,10 +60,8 @@ namespace AspnetWeb
                 await context.Response.WriteAsync("jwt token validation failed");
                 return;
             }
+			*/
 
-
-
-			/*
             if (!context.Request.Headers.TryGetValue("Authorization", out var extractedApiKey))
 			{
 				context.Response.StatusCode = StatusCodes.Status401Unauthorized;
@@ -94,7 +77,7 @@ namespace AspnetWeb
 				await context.Response.WriteAsync("jwt token validation failed");
 				return;
 			}
-			*/
+			
 
 			await _next(context);
 		}

@@ -95,12 +95,12 @@ namespace AspnetWeb
         public void UpdateSessionAndCookie(string sessionKey, byte[] userNoBytes)
         {
             var redisOptions = new DistributedCacheEntryOptions();
-            redisOptions.SetAbsoluteExpiration(TimeSpan.FromSeconds(60));
+            redisOptions.SetAbsoluteExpiration(TimeSpan.FromSeconds(180));
 
             _redisCache.Set(sessionKey, userNoBytes, redisOptions);
 
             CookieOptions cookieOptions = new CookieOptions();
-            cookieOptions.Expires = DateTimeOffset.UtcNow.AddSeconds(60);
+            cookieOptions.Expires = DateTimeOffset.UtcNow.AddSeconds(180);
 
             _httpContextAccessor.HttpContext.Response.Cookies.Append("SESSION_KEY", sessionKey, cookieOptions);
         }
@@ -115,39 +115,39 @@ namespace AspnetWeb
             string sessionKey = Guid.NewGuid().ToString();    // GUID는 매우 난수적이며 중복될 가능성이 매우 낮은 값.
 
             var redisOptions = new DistributedCacheEntryOptions();
-            redisOptions.SetAbsoluteExpiration(TimeSpan.FromSeconds(60));   // 현재를 기준으로 절대 만료 시간을 설정
+            redisOptions.SetAbsoluteExpiration(TimeSpan.FromSeconds(180));   // 현재를 기준으로 절대 만료 시간을 설정
             byte[] userNoBytes = BitConverter.GetBytes(uid);
             _redisCache.Set(sessionKey, userNoBytes, redisOptions);   // redis에 sessionKey 저장, 값은 UID로 해서 어떤 유저인지 식별.
                                                                       // 세션은 연결된 유저가 누구인지 저장하고 있다. 
 
             CookieOptions cookieOptions = new CookieOptions();
-            cookieOptions.Expires = DateTimeOffset.UtcNow.AddSeconds(60);  // 쿠키도 만료시간 설정
+            cookieOptions.Expires = DateTimeOffset.UtcNow.AddSeconds(180);  // 쿠키도 만료시간 설정
             _httpContextAccessor.HttpContext.Response.Cookies.Append("SESSION_KEY", sessionKey, cookieOptions); // 클라이언트에게 세션키 전달
         }
 
-        /// <summary>
-        /// 세션 제거
-        /// </summary>
-        /// <param name="sessionKey"></param>
-        public void RemoveSession(string sessionKey)
-        {
-            _httpContextAccessor.HttpContext.Response.Cookies.Delete("SESSION_KEY");     // 클라이언트에게 해당 세션 키를 지우도록 쿠키를 전송
-            _redisCache.Remove(sessionKey);   // redis에서도 세션키 삭제
-        }
 
         /// <summary>
-        /// 구글 유저 정보 가져오기
+        /// 이미 Google 회원가입한 유저 정보를 가져옴. 
+        /// 가입되어있지 않다면 Google에서 받아온 유저이름,이메일 등의 정보로 oAuthUser로 회원가입시킴. 
         /// </summary>
         /// <param name="code"></param>
         /// <returns></returns>
         public async Task<OAuthUser> GetGoogleUser(string code)
         {
-            var accessToken = GetAccessToken(code);
+            // Google Access Token 가져오기
+            string? accessToken = null;
+			try
+			{
+				var tokenResponse = _flow.ExchangeCodeForTokenAsync(null, code,
+						"https://localhost:44396/Home/GoogleUserEmailList", CancellationToken.None).Result;
 
-            if (accessToken.IsNullOrEmpty())  // 토큰을 정상적으로 받아오지 못했을 때
-            {
+				accessToken = tokenResponse.AccessToken;
+			}
+			catch (Exception ex)   // 토큰을 정상적으로 받아오지 못했을 때
+			{
                 return null;
-            }
+			}
+
 
             // 토큰을 정상적으로 받아옴 - 사용자 정보를 DB에 저장하거나 세션에 저장.
             var oauth2Service = new Oauth2Service(new BaseClientService.Initializer()
@@ -186,7 +186,6 @@ namespace AspnetWeb
 
             oAuthUser.MUID = user.UID;
             await _dbContext.OAuthUsers.AddAsync(oAuthUser);
-
             _dbContext.SaveChanges();
 
             GenerateSession(oAuthUser.MUID);
@@ -195,35 +194,13 @@ namespace AspnetWeb
 
         }
 
-        /// <summary>
-        /// 구글 Access Token 가져오기
-        /// </summary>
-        /// <param name="code"></param>
-        /// <returns></returns>
-        public string GetAccessToken(string code)
-        {
-            try
-            {
-                var tokenResponse = _flow.ExchangeCodeForTokenAsync(null, code,
-						"https://localhost:44396/Home/GoogleUserEmailList", CancellationToken.None).Result;
 
-                var accessToken = tokenResponse.AccessToken;
-
-                return accessToken;
-            }
-            catch (Exception ex)   // 토큰을 정상적으로 받아오지 못했을 때
-            {
-                return null;
-            }
-        }
-
-
-        /// <summary>
-        /// SHA256 해시 함수
-        /// </summary>
-        /// <param name="data"></param>
-        /// <returns></returns>
-        public string SHA256Hash(string data)
+		/// <summary>
+		/// SHA256 해시 함수
+		/// </summary>
+		/// <param name="data"></param>
+		/// <returns></returns>
+		public string SHA256Hash(string data)
         {
             SHA256 sHA256 = SHA256.Create();
             byte[] hash = sHA256.ComputeHash(Encoding.ASCII.GetBytes(data));  // byte[]형식의 해시값으로 변환

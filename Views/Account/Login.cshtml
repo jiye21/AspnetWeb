@@ -1,78 +1,90 @@
 ﻿@model AspnetWeb.ViewModel.LoginViewModel
 
 
-<div class="login">
-	<input type="text" id="userid" placeholder="UserID" required>
-	<input type="password" id="password" placeholder="Password" required>
+<form class="login" id="login" method="post" asp-controller="Account" asp-action="Login">
+	<div class="text-danger" asp-validation-summary="ModelOnly"></div>
+
+	<input type="text" id="userID" asp-for="UserId" placeholder="UserID">
+	<span class="text-danger" asp-validation-for="UserId"></span>
+
+	<input type="password" id="password" asp-for="UserPassword" placeholder="Password">
+	<span class="text-danger" asp-validation-for="UserPassword"></span>
+
 	<div class="email-container">
 		<span class="left">
-			<button onclick="emaillogin()">Login</button>
+			<button type="submit">Login</button>
 		</span>
 		<span class="right">
-			<button onclick="jwtlogin()">JWT Login</button>
+			<button type="button" id="jwtLoginButton">JWT Login</button>
 		</span>
 	</div>
 	<div class="social-container">
 		<p>or use Google for Login</p>
 		<a href="https://localhost:44396/Account/GoogleLogin" class="social"><i class="fab fa-google-plus-g"></i></a>
 	</div>
-</div>
-
+</form>
 
 @section Scripts {
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/js-sha256/0.9.0/sha256.min.js"></script>
 	<script src='https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js'></script>
-	
 
 	<script>
-		async function emaillogin() {
-			const userid = document.getElementById("userid").value;
-			const passwordInput = document.getElementById('password').value;
-			let hashedPassword = "";
-			if (passwordInput != "") {
-				hashedPassword = sha256(passwordInput).toString();
+		document.getElementById('login').addEventListener('submit', function (event) {
+			event.preventDefault(); // 기본 폼 제출 동작을 방지
+
+			const passwordInput = document.getElementById('password');
+			if (passwordInput.value != "") {
+				const hashedPassword = sha256(passwordInput.value).toString();
+
+				// 비밀번호 입력 필드를 해시화된 값으로 덮어씀
+				passwordInput.value = hashedPassword;
 			}
 
+			// 폼을 다시 제출
+			this.submit();
+			passwordInput.value = '';
+		});
 
-			const response = await fetch("https://localhost:44396/Account/Login", {
-				method: "POST",
-				headers: {
-					"Content-Type": "application/json"
-				},
-				body: JSON.stringify({
-					UserId: userid,
-					UserPassword: hashedPassword
-				})
-			});
+		document.getElementById('jwtLoginButton').addEventListener('click', async function (event) {
+			event.preventDefault(); // 기본 클릭 동작을 방지
 
-			// 비밀번호 입력 필드 초기화
-			document.getElementById('password').value = '';
-		}
 
-		async function jwtlogin() {
-			const userid = document.getElementById("userid").value;
-			const passwordInput = document.getElementById('password').value;
-			let hashedPassword = "";
-			if (passwordInput != "") {
-				hashedPassword = sha256(passwordInput).toString();
+			const username = document.getElementById("userID").value;
+			const password = document.getElementById("password").value;
+			let hashedPassword = "";  // const 변수는 재할당을 허용하지 않음
+			if (password.value != "") {
+				hashedPassword = sha256(password).toString();
 			}
 
+			try {
+				const response = await fetch("https://localhost:44396/Account/LoginWithJWT", {
+					method: "POST",
+					headers: {
+						"Content-Type": "application/json"
+					},
+					body: JSON.stringify({
+						UserId: username,
+						UserPassword: hashedPassword
+					})
+				});
+				document.getElementById("password").value = "";
 
-			const response = await fetch("https://localhost:44396/Account/JWTLogin", {
-				method: "POST",
-				headers: {
-					"Content-Type": "application/json"
-				},
-				body: JSON.stringify({
-					UserId: userid,
-					UserPassword: hashedPassword
-				})
-			});
+				if (response.ok) {
+					const data = await response.json();
+					const token = data.token; // 서버가 반환하는 JWT 토큰
+					sessionStorage.setItem("jwtToken", token); // 토큰을 로컬 스토리지에 저장
 
-			
-			// 비밀번호 입력 필드 초기화
-			document.getElementById('password').value = '';
-		}
+					location.href = "https://localhost:44396/Home/Index";
+
+					} else {
+					alert("로그인 실패: " + response.statusText);
+				}
+			} catch (error) {
+				console.error("에러 발생:", error);
+				alert("에러 발생: " + error.message);
+			}
+
+		});
 	</script>
 
 	<script type="text/javascript">

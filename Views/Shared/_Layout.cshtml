@@ -49,6 +49,9 @@
 						<li class="nav-item">
 							<a class="nav-link text-dark" asp-area="" asp-controller="Account" asp-action="Login">로그인</a>
 						</li>
+						<li class="nav-item">
+							<a class="nav-link text-dark" asp-area="" asp-controller="Note" asp-action="Shop">Shop</a>
+						</li>
 					</ul>
 				</div>
 			}	
@@ -66,11 +69,14 @@
 						</li>
 					</ul>
 					<ul class="navbar-nav navbar-right">
-						<li class="nav-item">
+						@* <li class="nav-item">
 							<a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="MyPage">MyPage</a>
-						</li>
+						</li> *@
 						<li class="nav-item">
 							<a class="nav-link text-dark" asp-area="" asp-controller="Note" asp-action="Shop">Shop</a>
+						</li>
+						<li class="nav-item">
+							<a class="nav-link text-dark" asp-area="" asp-controller="Note" asp-action="Friend">Friend</a>
 						</li>
 						<li class="nav-item">
 							<a class="nav-link text-dark" asp-area="" asp-controller="Account" asp-action="Logout">로그아웃</a>

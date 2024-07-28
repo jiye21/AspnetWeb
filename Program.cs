@@ -20,6 +20,10 @@ builder.Services.AddStackExchangeRedisCache(options =>                  // 분산�
     options.Configuration = "127.0.0.1";                                // redis 주소
 });
 
+// You registered the IEmailRepository as a scoped service, in the Startup class.
+// This means that you can not inject it as a constructor parameter in Middleware
+// because only Singleton services can be resolved by constructor injection in Middleware.
+// You should move the dependency to the Invoke method
 builder.Services.AddTransient<IAuthService, AuthService>();
 
 // controller가 아닌 곳에서 httpcontext를 받아오기 위함
@@ -81,6 +85,7 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UseDefaultFiles();
 app.UseStaticFiles();
 
 app.UseRouting();
@@ -92,8 +97,13 @@ app.UseAuthorization();
 // 세션, JWT 인증 체크 Middleware 추가, [api] 컨트롤러만 적용
 app.UseWhen(context => context.Request.Path.StartsWithSegments("/api"), appBuilder =>
 {
-	// 세션, JWT 체크 미들웨어
 	appBuilder.UseMiddleware<RequestAuthMiddleware>(); // 사용자 정의 미들웨어
+});
+
+// 세션, JWT 존재 여부 체크 Middleware 추가, [Account] 컨트롤러만 적용
+app.UseWhen(context => context.Request.Path.StartsWithSegments("/Account"), appBuilder =>
+{
+	appBuilder.UseMiddleware<CheckLoginMiddleware>();
 });
 
 

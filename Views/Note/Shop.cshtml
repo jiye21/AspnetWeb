@@ -15,16 +15,16 @@
 			<span class="left">
 				<button onclick='count("plus1")'>+</button>
 			</span>
-			<span id='result1'>0</span>
+			<span id='result1'>1</span>
 			<span class="right">
 				<button onclick='count("minus1")'>-</button>
 			</span>
 		</td>
 		<td data-th="Price">
-			<span id='price1'>0</span>
+			<span id='price1'>3500</span>
 		</td>
 		<td data-th="Price">
-			<button onclick='sendData("1")'>Buy</button>
+			<button onclick='addCart("1")'>Add Cart</button>
 		</td>
 	</tr>
 	<tr>
@@ -35,16 +35,16 @@
 			<span class="left">
 				<button onclick='count("plus2")'>+</button>
 			</span>
-			<span id='result2'>0</span>
+			<span id='result2'>1</span>
 			<span class="right">
 				<button onclick='count("minus2")'>-</button>
 			</span>
 		</td>
 		<td data-th="Price">
-			<span id='price2'>0</span>
+			<span id='price2'>2000</span>
 		</td>
 		<td data-th="Price">
-			<button onclick='sendData("2")'>Buy</button>
+			<button onclick='addCart("2")'>Add Cart</button>
 		</td>
 	</tr>
 	<tr>
@@ -55,18 +55,42 @@
 			<span class="left">
 				<button onclick='count("plus3")'>+</button>
 			</span>
-			<span id='result3'>0</span>
+			<span id='result3'>1</span>
 			<span class="right">
 				<button onclick='count("minus3")'>-</button>
 			</span>
 		</td>
 		<td data-th="Price">
-			<span id='price3'>0</span>
+			<span id='price3'>20000</span>
 		</td>
 		<td data-th="Price">
-			<button onclick='sendData("3")'>Buy</button>
+			<button onclick='addCart("3")'>Add Cart</button>
 		</td>
 	</tr>
+
+	
+</table>
+<h2>Total</h2>
+<table class="rwd-table" id="shop-total">
+	<thead>
+		<tr>
+			<th>Product</th>
+			<th>Count</th>
+			<th>Price</th>
+		</tr>
+	</thead>
+	<tbody>
+		
+	</tbody>
+	<tfoot>
+		<tr>
+			<td></td>
+			<td></td>
+			<td>
+				<button onclick='sendData()'>Buy</button>
+			</td>
+		</tr>
+	</tfoot>
 </table>
 
 
@@ -96,17 +120,35 @@
 
 @section Scripts {
 	<script>
+		function getPrice(productname) {
+			let price = 0;
+			if (productname == 'Corn') {
+				price = 3500;
+			}
+			else if (productname == 'Cucumber') {
+				price = 2000;
+			}
+			else {
+				price = 20000;
+			}
+
+			return price;
+		}
 		function count(type) {
 			// 마지막 문자열 추출
 			let lastChar = type.slice(-1);
 
-			// 결과를 표시할 element
+			// 개수, 가격 결과를 표시할 element
 			const resultElement = document.getElementById('result' + lastChar);
 			const priceElement = document.getElementById('price' + lastChar);
 
+			
+
 			// 현재 화면에 표시된 값
 			let number = resultElement.innerText;
-			let price = 1977;
+			// price
+			const productname = document.getElementById('product' + lastChar).innerText;
+			let price = getPrice(productname);
 
 			// 더하기/빼기
 			if (type.slice(0, -1) == 'plus') {
@@ -114,42 +156,295 @@
 				price = price * parseInt(number);
 			}
 			else if (type.slice(0, -1) == 'minus') {
-				if (parseInt(number) <= 0) {
+				if (parseInt(number) == 1) {
+					if (lastChar == "4") {
+						const element = document.getElementById("Corn");
+						element.remove();
+
+						return;
+					}
+					if (lastChar == "5"){
+						const element = document.getElementById("Cucumber");
+						element.remove();
+
+						return;
+					}
+					if (lastChar == "6") {
+						const element = document.getElementById("Rainboots");
+						element.remove();
+
+						return;
+					}
+
 					number = 0;
 					price = 0;
+
 				}
 				else {
 					number = parseInt(number) - 1;
 					price = price * parseInt(number);
 				}
 			}
+			
 
 			// 결과 출력
 			resultElement.innerText = number;
 			priceElement.innerText = price;
 		}
 
+		
+		
+		function addCart(type){
+			let lastChar = type.slice(-1);
 
-		async function sendData(order) {
-			const productname = document.getElementById('product' + order).innerText;
-			const count = document.getElementById('result' + order).innerText;
-			const price = document.getElementById('price' + order).innerText;
+			const productname = document.getElementById('product' + lastChar).innerText;
+			const result = document.getElementById('result' + lastChar).innerText;
+			const price = document.getElementById('price' + lastChar).innerText;
+
+			console.log("Productname: ", productname);
+			console.log("개수: ", result);
+			console.log("가격: ", price);
+
+			// 장바구니
+			const shopTotalTableBody = document.querySelector("#shop-total tbody");
+
+			// 만약 동일한 상품이 이미 장바구니에 존재한다면 개수만 증가
+			const isRow = document.getElementById(productname);
+			if (isRow){
+				if (productname == 'Corn') {
+					let isResultElem = document.getElementById("result" + "1");
+					let isPriceElem = document.getElementById("price" + "1");
+
+					let isResult = parseInt(isResultElem.innerText);
+					let isPrice = parseInt(isPriceElem.innerText);
+
+					console.log("연산 전 isResult: ", isResult);
+					console.log("연산 전 isPrice: ", isPrice);
+
+					// 결과를 반영할 element
+					let resultElem = document.getElementById("result" + "4");
+					let priceElem = document.getElementById("price" + "4");
+
+					isResult += parseInt(resultElem.innerText);
+					isPrice += parseInt(priceElem.innerText);
+
+					console.log("연산 후 isResult: ", isResult);
+					console.log("연산 후 isPrice: ", isPrice);
+
+
+					// 값을 업데이트한 후, DOM에 다시 반영하기 위해 innerText 속성을 설정.
+					resultElem.innerText = isResult;
+					priceElem.innerText = isPrice;
+				}
+				else if (productname == 'Cucumber') {
+					let isResultElem = document.getElementById("result" + "2");
+					let isPriceElem = document.getElementById("price" + "2");
+
+					let isResult = parseInt(isResultElem.innerText);
+					let isPrice = parseInt(isPriceElem.innerText);
+
+					let resultElem = document.getElementById("result" + "5");
+					let priceElem = document.getElementById("price" + "5");
+
+					isResult += parseInt(resultElem.innerText);
+					isPrice += parseInt(priceElem.innerText);
+
+					resultElem.innerText = isResult;
+					priceElem.innerText = isPrice;
+				}
+				else {
+					let isResultElem = document.getElementById("result" + "3");
+					let isPriceElem = document.getElementById("price" + "3");
+
+					let isResult = parseInt(isResultElem.innerText);
+					let isPrice = parseInt(isPriceElem.innerText);
+
+					let resultElem = document.getElementById("result" + "6");
+					let priceElem = document.getElementById("price" + "6");
+
+					isResult += parseInt(resultElem.innerText);
+					isPrice += parseInt(priceElem.innerText);
+
+					resultElem.innerText = isResult;
+					priceElem.innerText = isPrice;
+				}
+				return;
+			}
+
+			const row = document.createElement("tr");
+			row.id = productname;
+
+			// productname 별로 장바구니 버튼 id 지정
+			let plusButtonValue = 0;
+			if(productname == 'Corn'){
+				plusButtonValue = "4";
+			}
+			else if (productname == 'Cucumber') {
+				plusButtonValue = "5";
+			}
+			else {
+				plusButtonValue = "6";
+			}
+
+			const cell_name = document.createElement("td");
+			const cell_result = document.createElement("td");
+			const cell_price = document.createElement("td");
+
+			cell_name.textContent = productname;
+			cell_name.id = 'product' + plusButtonValue;
+			cell_price.textContent = price;
+			cell_price.id = 'price' + plusButtonValue;
+
+
+			// result <td>의 span 자식들 생성
+			let spanLeft = document.createElement('span');
+			spanLeft.className = 'left';
+
+			let spanResult = document.createElement('span');
+			spanResult.id = 'result' + plusButtonValue;
+			spanResult.textContent = result;
+
+			let spanRight = document.createElement('span');
+			spanRight.className = 'right';
+
+			// <button> 요소들을 생성합니다.
+			let plusButton = document.createElement("button");
+			plusButton.textContent = "+";
+			plusButton.onclick = () => count("plus" + plusButtonValue);
+
+			let minusButton = document.createElement("button");
+			minusButton.textContent = "-";
+			minusButton.onclick = () => count("minus" + plusButtonValue);
+
+			// 생성된 <button> 요소들을 각각의 <span> 요소에 추가
+			spanLeft.appendChild(plusButton);
+			spanRight.appendChild(minusButton);
+
+			// 생성된 <span> 요소들을 <td> 요소에 추가
+			cell_result.appendChild(spanLeft);
+			cell_result.appendChild(spanResult);
+			cell_result.appendChild(spanRight);
+
+
+			// <tr> 행에 자식들 추가
+			row.appendChild(cell_name);
+			row.appendChild(cell_result);
+			row.appendChild(cell_price);
+
+			shopTotalTableBody.appendChild(row);
+		}
+		
+		
+		function getAuthorizationHeader() {
+			const token = sessionStorage.getItem('jwtToken');
+			return token ? token : null;
+		}
+
+		async function sendData() {
+			console.log("sendData called.");
+
+			const isCorn = document.getElementById("Corn");
+			const isCucumber = document.getElementById("Cucumber");
+			const isRainboots = document.getElementById("Rainboots");
+
 			const time = new Date();
 			const isotime = time.toISOString();
 
+			const token = getAuthorizationHeader();
 
-			await fetch('https://localhost:44396/api/Note/ShoppingList', {
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json'
-				},
-				body: JSON.stringify({
-					Product: productname,
-					Count: parseInt(count),
-					Price: parseInt(price),
-					PurchaseDate: isotime
-				}),
-			});
+			if (isCorn) {
+				console.log("isCorn called.");
+				const count = document.getElementById('result' + "4").innerText;
+				const price = document.getElementById('price' + "4").innerText;
+
+				await fetch('https://localhost:44396/api/Note/ShoppingList', {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json',
+						"Authorization": `Bearer ${token}`
+					},
+					body: JSON.stringify({
+						Product: "Corn",
+						Count: parseInt(count),
+						Price: parseInt(price),
+						PurchaseDate: isotime
+					}),
+				})
+					.then(response => {
+						// ?? confirm의 결과가 어떻든 reload만 하는 중
+						if (!response.ok) {
+							if (confirm("회원만 구매할 수 있습니다. 로그인 하시겠습니까?")) {
+								window.location.href = 'https://localhost:44396/Account/Login';
+							}
+							else {
+								location.reload();
+							}
+						}
+					});
+			}
+			if(isCucumber){
+				console.log("isCucumber called.");
+
+				const count = document.getElementById('result' + "5").innerText;
+				const price = document.getElementById('price' + "5").innerText;
+
+				await fetch('https://localhost:44396/api/Note/ShoppingList', {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json',
+						"Authorization": `Bearer ${token}`
+					},
+					body: JSON.stringify({
+						Product: "Cucumber",
+						Count: parseInt(count),
+						Price: parseInt(price),
+						PurchaseDate: isotime
+					}),
+				})
+					.then(response => {
+						if (!response.ok) {
+							if (confirm("회원만 구매할 수 있습니다. 로그인 하시겠습니까?")) {
+								window.location.href = 'https://localhost:44396/Account/Login';
+							}
+							else {
+								location.reload();
+							}
+						}
+					});
+			}
+			if (isRainboots) {
+				console.log("isRainboots called.");
+
+				const count = document.getElementById('result' + "6").innerText;
+				const price = document.getElementById('price' + "6").innerText;
+
+				await fetch('https://localhost:44396/api/Note/ShoppingList', {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json',
+						"Authorization": `Bearer ${token}`
+					},
+					body: JSON.stringify({
+						Product: "Rainboots",
+						Count: parseInt(count),
+						Price: parseInt(price),
+						PurchaseDate: isotime
+					}),
+				})
+					.then(response => {
+						if (!response.ok) {
+							if (confirm("회원만 구매할 수 있습니다. 로그인 하시겠습니까?")) {
+								window.location.href = 'https://localhost:44396/Account/Login';
+							}
+							else{
+								location.reload();
+							}
+						}
+					});
+			}
+
+
+
 
 			location.reload();
 		}

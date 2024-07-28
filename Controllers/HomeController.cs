@@ -30,7 +30,7 @@ namespace AspnetWeb.Controllers
 		public IActionResult MemberIndex()
         {
 			ViewData["SESSION_KEY"] = string.Empty;  // 내비게이션 바 변경을 위한 ViewData
-			
+
             return View();
 		}
 
@@ -81,24 +81,25 @@ namespace AspnetWeb.Controllers
                 return RedirectToAction("Login", "Account");
             }
 
-            var googleUser = await _authService.GetGoogleUser(code);
+			// GetGoogleUser: 이미 Google 회원가입한 유저 정보를 가져옴. 
+			// 가입되어있지 않다면 Google에서 받아온 유저이름,이메일 등의 정보로 oAuthUser로 회원가입시키고 그 유저정보를 가져옴. 
+			var googleUser = await _authService.GetGoogleUser(code);
 
             if (googleUser == null)   // 유저를 정상적으로 받아오지 못했을 때
             {
                 return RedirectToAction("Login", "Account");
             }
 
-            ViewData["SESSION_KEY"] = string.Empty;  // 내비게이션 바 변경을 위한 ViewData
-            ViewData["Page"] = "Google";
-
+            // 받아온 Google OAuth유저 정보로 User테이블을 검색해 유저이름을 받아옴
             var userInfo = _dbContext.Users.FirstOrDefault(u=>u.UID.Equals(googleUser.MUID));
-
             if (userInfo != null) 
             { 
                 ViewData["Name"] = userInfo.UserName;
             }
 
             
+            ViewData["SESSION_KEY"] = string.Empty;  // 내비게이션 바 변경을 위한 ViewData
+            ViewData["Page"] = "Google";
             return View(googleUser);
         }
 
@@ -121,7 +122,6 @@ namespace AspnetWeb.Controllers
 		    ViewData["SESSION_KEY"] = string.Empty;  // 내비게이션 바 변경을 위한 ViewData
             ViewData["Page"] = "MyPage";
             return View();
-
         }
 
 

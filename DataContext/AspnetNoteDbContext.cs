@@ -11,9 +11,10 @@ namespace AspnetWeb.DataContext
         public DbSet<AspnetUser> AspnetUsers { get; set; }
         public DbSet<OAuthUser> OAuthUsers { get; set; }
         public DbSet<ShoppingList> ShoppingList { get; set; }
+		public DbSet<FriendList> FriendList { get; set; }
 
 
-        protected override void OnModelCreating(ModelBuilder modelBuilder)
+		protected override void OnModelCreating(ModelBuilder modelBuilder)
 		{
 			base.OnModelCreating(modelBuilder);
 
@@ -50,6 +51,19 @@ namespace AspnetWeb.DataContext
 
 				entity.Property(u => u.PurchaseDate)
 				.HasColumnType("datetimeoffset");
+			});
+
+
+			modelBuilder.Entity<FriendList>(entity =>
+			{
+				entity.Property(u => u.MUID)
+				.HasColumnType("bigint");
+
+				entity.Property(u => u.UID)
+				.HasColumnType("bigint");
+
+				entity.Property(u => u.FriendMUID)
+				.HasColumnType("bigint");
 			});
 
 		}

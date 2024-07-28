@@ -7,6 +7,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using AspnetWeb.Models;
 using Microsoft.Extensions.Caching.StackExchangeRedis;
+using Microsoft.Extensions.Caching.Distributed;
 
 
 namespace AspnetWeb.Controllers
@@ -16,14 +17,16 @@ namespace AspnetWeb.Controllers
 		private readonly IAuthService _authService;
 		private readonly GoogleAuthorizationCodeFlow _flow;
 		private readonly IConfiguration _config;
+		private readonly IDistributedCache _redisCache;
 
 		// 생성자 주입을 통한 DI
 		public AccountController(IAuthService authService, GoogleAuthorizationCodeFlow flow,
-			IConfiguration config)
+			IConfiguration config, IDistributedCache redisCache)
 		{
 			_authService = authService;
 			_flow = flow;
 			_config = config;
+			_redisCache = redisCache;
 		}
 
 
@@ -44,7 +47,7 @@ namespace AspnetWeb.Controllers
 		/// <param name="model"></param>
 		/// <returns></returns>
 		[HttpPost]
-		public async Task<IActionResult> Login([FromBody] LoginViewModel model)
+		public async Task<IActionResult> Login(LoginViewModel model)
 		{
 			if (ModelState.IsValid)
 			{
@@ -54,7 +57,9 @@ namespace AspnetWeb.Controllers
 				if (user != null)
 				{
 					_authService.GenerateSession(user.MUID);
-					return Redirect("https://localhost:44396/api/LoginSuccess");
+					// Server side RedirectToAction will only work if you start the request from your browser's location bar. 
+					return RedirectToAction("MemberIndex", "Home");
+					// return Redirect("https://localhost:44396/api/LoginSuccess");
 				}
 			}
 
@@ -70,7 +75,6 @@ namespace AspnetWeb.Controllers
 		/// </summary>
 		/// <param name="model"></param>
 		/// <returns></returns>
-		[Route("/Account/JWTLogin")]
 		[HttpPost]
 		public async Task<IActionResult> LoginWithJWT([FromBody] LoginViewModel model)
 		{
@@ -81,8 +85,10 @@ namespace AspnetWeb.Controllers
 				// JWT 발급 - 로그인에 성공했을 때
 				if (user != null)
 				{
-					GenerateJWT(user);
-                    return Redirect("https://localhost:44396/api/Home/MemberIndex");
+					var tokenString = GenerateJWT(user);
+
+					IActionResult response = Ok(new { token = tokenString });
+					return response;
                 }
 			}
 
@@ -92,7 +98,7 @@ namespace AspnetWeb.Controllers
 			return View(model);
 		}
 
-		public void GenerateJWT(AspnetUser user)
+		public string GenerateJWT(AspnetUser user)
 		{
 			// 비밀키 생성 후 Signature 필드 생성
 			var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["JWT:SecretKey"]));
@@ -115,35 +121,65 @@ namespace AspnetWeb.Controllers
 			// jwt 토큰 생성
 			string tokenString = new JwtSecurityTokenHandler().WriteToken(token);
 
-			var cookieOptions = new CookieOptions
-			{
-				HttpOnly = true, // HTTPOnly 속성을 설정하여 클라이언트 측 JavaScript에서 접근할 수 없게 함
-				Secure = true, // HTTPS에서만 쿠키 전송을 허용 (SSL/TLS를 사용해야 함)
-			};
+			return tokenString;
 
-            HttpContext.Response.Cookies.Append("AccessToken", tokenString, cookieOptions);
+			// 쿠키에 토큰을 담아 전달
+			//var cookieOptions = new CookieOptions
+			//{
+			//	HttpOnly = true, // HTTPOnly 속성을 설정하여 클라이언트 측 JavaScript에서 접근할 수 없게 함
+			//	Secure = true, // HTTPS에서만 쿠키 전송을 허용 (SSL/TLS를 사용해야 함)
+			//};
 
-			
-
-            // 토큰 생성 후 JSON 응답
-            //IActionResult response = Ok(new { token = tokenString });
-            //return response;
+			//  HttpContext.Response.Cookies.Append("AccessToken", tokenString, cookieOptions);
         }
 
 		[Route("/api/Logout")]
 		public IActionResult Logout()
 		{
-			string sessionKey = HttpContext.Request.Cookies["SESSION_KEY"];  // 클라이언트의 쿠키를 받아옴
+			long? userMUID = null;
+
+			string sessionKey = HttpContext.Request.Cookies["SESSION_KEY"];
+			// 세션 로그인일 경우
+			// (Google 로그인도 세션을 발급받아 마이페이지 접근하므로 로그아웃 시 세션로그인과 동일하게 처리)
             if (!string.IsNullOrEmpty(sessionKey))
             {
-                _authService.RemoveSession(sessionKey);  // api 미들웨어에서 세션 검증완료, 바로 세션 삭제만 진행
-                return RedirectToAction("Index", "Home");
+				// api 미들웨어에서 세션 검증완료, 바로 세션 삭제만 진행
+				var sessionValue = _redisCache.Get(sessionKey);
+				if (sessionValue != null)
+				{
+					userMUID = BitConverter.ToInt64(sessionValue);
+				}
+				HttpContext.Response.Cookies.Delete("SESSION_KEY"); // 클라이언트에게 해당 세션 키를 지우도록 쿠키를 전송
+				_redisCache.Remove(sessionKey);   // redis에서도 세션키 삭제
+
+				if(userMUID.HasValue)
+				{
+					_redisCache.Remove("shoppinglist_" + userMUID.ToString()); // 캐싱된 shoppinglist 데이터 삭제
+					_redisCache.Remove("friendlist_" + userMUID.ToString());
+					_redisCache.Remove("friend_hearts_" + userMUID.ToString());
+				}
+				return RedirectToAction("Index", "Home");
             }
 
 
-			// 구글 로그인일 경우 추후 구현
-            return RedirectToAction("Index", "Home");
+
+			// 세션 로그인이 아니라면 JWT 로그인, 캐싱된 shoppinglist 데이터만 삭제
+			// string token = HttpContext.Request.Cookies["AccessToken"];
+
+			string token = HttpContext.Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
+			var tokenHandler = new JwtSecurityTokenHandler();
+			var accessToken = (JwtSecurityToken)tokenHandler.ReadToken(token);
+
+			userMUID = Convert.ToInt64(accessToken.Claims.
+				FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value);
+			if (userMUID.HasValue)
+			{
+				_redisCache.Remove("shoppinglist_" + userMUID.ToString());
+			}
+			return RedirectToAction("Index", "Home");
 		}
+
+
 
 		/// <summary>
 		/// 회원가입

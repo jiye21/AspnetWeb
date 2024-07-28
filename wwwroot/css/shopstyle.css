@@ -126,3 +126,12 @@ button {
     background-color: #f45b69;
     margin-left: 1em;
 }
+
+input {
+    display: block;
+    border-radius: 5px;
+    font-size: 16px;
+    background: white;
+    width: 270px;
+    border: 0;
+}
