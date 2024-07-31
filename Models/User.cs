@@ -1,9 +1,8 @@
 ﻿using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 
 namespace AspnetWeb.Models
 {
-    // UID(PK), NickName
+    // UID(PK), NickName, LoginType
     public class User
     {
         /// <summary>

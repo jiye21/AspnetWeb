@@ -1,0 +1,228 @@
+﻿@model List<AspnetWeb.ViewModel.FriendListViewModel>
+
+<h1>My Friends</h1>
+<table class="rwd-table">
+	<tr>
+		<th>Rank</th>
+		<th>UID</th>
+		<th>Name</th>
+		<th>Hearts</th>
+		<th></th>
+	</tr>
+	@if (Model != null)
+	{
+		@for (int i = 0; i < Model.Count; i++)
+		{
+			<tr>
+				<td data-th="Rank">
+					<span id="rank@(i+1)">
+						@Model[i].Rank
+					</span>
+				</td>
+
+				<td data-th="UID">
+					<span id="friendMUID@(i+1)">
+						@Model[i].FriendMUID
+					</span>
+				</td>
+
+				<td data-th="Name">
+					<span id="friendName@(i+1)">
+						@Model[i].FriendName
+					</span>
+				</td>
+				
+				<td data-th="Hearts">
+					<span class="left">
+						<button onclick='count("plus@(i+1)")'>+</button>
+					</span>
+					<span id="heartCount@(i+1)">
+						@Model[i].HeartCount
+					</span>
+					<span class="right">
+						<button onclick='count("minus@(i+1)")'>-</button>
+					</span>	
+				</td>
+
+				<td>
+					<button onclick="deleteFriend(@Model[i].FriendMUID)">Delete</button>
+				</td>
+				
+			</tr>
+		}
+	}
+</table>
+
+<br />
+
+
+<h1>Search Users</h1>
+<table class="rwd-table">
+	<tr>
+		<th>
+			<input type="text" id="username" placeholder="Enter username to search for.." />
+		</th>
+		<th>
+			<button onclick='searchUser()'>Search</button>
+		</th>
+	</tr>
+</table>
+<table class="rwd-table" id="friend-table">
+	<thead>
+		<tr>
+			<th>Name</th>
+			<th>UID</th>
+			<th></th>
+		</tr>
+	</thead>
+	<tbody>
+		
+	</tbody>
+		
+	
+</table>
+
+
+
+
+@section Scripts {
+	<script>
+		function count(type) {
+			// 마지막 문자열 추출
+			let lastChar = type.slice(-1);
+			console.log("매개변수: ", type);
+
+			const rank = document.getElementById('rank' + lastChar).innerText;
+			const friendName = document.getElementById('friendName' + lastChar).innerText;
+			const friendMUID = document.getElementById('friendMUID' + lastChar).innerText;
+			const heartCountElement = document.getElementById('heartCount' + lastChar);
+
+			const token = getAuthorizationHeader();
+
+			// 현재 좋아요 수
+			let heartCount = heartCountElement.innerText;
+
+			// 더하기/빼기
+			if (type.slice(0, -1) == 'plus') {
+				heartCount = parseInt(heartCount) + 1;
+			}
+			else if (type.slice(0, -1) == 'minus') {
+				if (parseInt(heartCount) <= 0) {
+					heartCount = 0;
+					price = 0;
+				}
+				else {
+					heartCount = parseInt(heartCount) - 1;
+				}
+			}
+
+			// 좋아요 수 업데이트
+			fetch('https://localhost:44396/api/MyPage/UpdateHeartCount', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+					"Authorization": `Bearer ${token}`
+				},
+				body: JSON.stringify({
+					FriendName: friendName,
+					FriendMUID: parseInt(friendMUID),
+					HeartCount: parseInt(heartCount),
+					Rank: rank
+				}),
+			})
+				.then(response => {
+					if (response.ok) {
+						// 변경된 좋아요 수 표시
+						location.reload();
+					}
+					else {
+						alert("업데이트 실패: " + response.statusText);
+					}
+				});
+
+		}
+
+		function getAuthorizationHeader() {
+			const token = sessionStorage.getItem('jwtToken');
+			return token ? token : null;
+		}
+
+		function searchUser() {
+			let username = document.getElementById("username").value;
+			const friendTableBody = document.querySelector("#friend-table tbody");
+
+			console.log("검색할 사용자 이름:", username);
+
+			// URL에 템플릿 리터럴을 사용할 때, 백틱(``)을 사용해야 함.
+			fetch(`https://localhost:44396/api/MyPage/SearchFriendWithName/${encodeURIComponent(username)}`, {
+				method: 'GET',
+			})
+				.then(response => response.json())
+				.then(data => {
+					console.log("받은 데이터:", data);
+					friendTableBody.innerHTML = "";
+
+					const friendNameList = data.friendName;
+					const friendMUIDList = data.friendMUID;
+
+					console.log("friendNameList 배열:", friendNameList);
+					console.log("friendMUIDList 배열:", friendMUIDList);
+
+					for (let i = 0; i < friendNameList.length; i++) {
+						const row = document.createElement("tr");
+
+						const cell_name = document.createElement("td");
+						const cell_uid = document.createElement("td");
+						const cell_addButton = document.createElement("td");
+
+						const addButton = document.createElement("button");
+						addButton.textContent = "Add";
+						addButton.onclick = () => addUser(friendMUIDList[i]);
+						console.log("addButton:", friendMUIDList[i]);
+
+						cell_name.textContent = friendNameList[i];
+						cell_uid.textContent = friendMUIDList[i];
+						cell_addButton.appendChild(addButton);
+
+						row.appendChild(cell_name);
+						row.appendChild(cell_uid);
+						row.appendChild(cell_addButton);
+
+						friendTableBody.appendChild(row);
+
+						console.log(`추가된 행 ${i}:`, row);
+					}
+				})
+				.catch(error => {
+					console.error("Fetch 오류:", error);
+				});
+
+			username = '';
+		}
+
+		function addUser(muid) {
+			// URL에 템플릿 리터럴을 사용할 때, 백틱(``)을 사용해야 함.
+			fetch(`https://localhost:44396/api/MyPage/AddFriend/${encodeURIComponent(muid)}`, {
+				method: 'GET',
+			})
+				.then(response => {
+					location.reload();
+				});
+		}
+
+		function deleteFriend(muid) {
+			if (confirm("정말 삭제하시겠습니까?")){
+				fetch(`https://localhost:44396/api/MyPage/DeleteFriend/${encodeURIComponent(muid)}`, {
+					method: 'GET',
+				})
+					.then(response => {
+						location.reload();
+					});
+			}
+		}
+	</script>
+
+
+}
+
+
