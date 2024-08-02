@@ -6,7 +6,6 @@ using System.IdentityModel.Tokens.Jwt;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using AspnetWeb.Models;
-using Microsoft.Extensions.Caching.StackExchangeRedis;
 using Microsoft.Extensions.Caching.Distributed;
 
 
@@ -37,7 +36,6 @@ namespace AspnetWeb.Controllers
 		[HttpGet]
 		public IActionResult Login()
 		{
-			ViewData["LoginPage"] = true;
 			return View();
 		}
 
@@ -59,13 +57,11 @@ namespace AspnetWeb.Controllers
 					_authService.GenerateSession(user.MUID);
 					// Server side RedirectToAction will only work if you start the request from your browser's location bar. 
 					return RedirectToAction("MemberIndex", "Home");
-					// return Redirect("https://localhost:44396/api/LoginSuccess");
 				}
 			}
 
 			// 로그인에 실패했을 때 - 회원가입으로 넘기게 하기
-			ViewData["LoginPage"] = true;
-			ViewData["LoginFailed"] = true;
+			ViewData["LoginFailed"] = string.Empty;
 			return View(model);
 		}
 
@@ -85,20 +81,17 @@ namespace AspnetWeb.Controllers
 				// JWT 발급 - 로그인에 성공했을 때
 				if (user != null)
 				{
-					var tokenString = GenerateJWT(user);
+					GenerateJWT(user);
 
-					IActionResult response = Ok(new { token = tokenString });
-					return response;
-                }
+					return Ok();
+				}
 			}
 
 			// 로그인 실패
-			ViewData["LoginPage"] = true;
-			ViewData["LoginFailed"] = true;
-			return View(model);
+			return Unauthorized();
 		}
 
-		public string GenerateJWT(AspnetUser user)
+		public void GenerateJWT(AspnetUser user)
 		{
 			// 비밀키 생성 후 Signature 필드 생성
 			var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["JWT:SecretKey"]));
@@ -121,17 +114,15 @@ namespace AspnetWeb.Controllers
 			// jwt 토큰 생성
 			string tokenString = new JwtSecurityTokenHandler().WriteToken(token);
 
-			return tokenString;
-
 			// 쿠키에 토큰을 담아 전달
-			//var cookieOptions = new CookieOptions
-			//{
-			//	HttpOnly = true, // HTTPOnly 속성을 설정하여 클라이언트 측 JavaScript에서 접근할 수 없게 함
-			//	Secure = true, // HTTPS에서만 쿠키 전송을 허용 (SSL/TLS를 사용해야 함)
-			//};
+			var cookieOptions = new CookieOptions
+			{
+				HttpOnly = true, // HTTPOnly 속성을 설정하여 클라이언트 측 JavaScript에서 접근할 수 없게 함
+				Secure = true, // HTTPS에서만 쿠키 전송을 허용 (SSL/TLS를 사용해야 함)
+			};
 
-			//  HttpContext.Response.Cookies.Append("AccessToken", tokenString, cookieOptions);
-        }
+			HttpContext.Response.Cookies.Append("JWT", tokenString, cookieOptions);
+		}
 
 		[Route("/api/Logout")]
 		public IActionResult Logout()
@@ -164,9 +155,7 @@ namespace AspnetWeb.Controllers
 
 
 			// 세션 로그인이 아니라면 JWT 로그인, 캐싱된 shoppinglist 데이터만 삭제
-			// string token = HttpContext.Request.Cookies["AccessToken"];
-
-			string token = HttpContext.Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
+			string token = HttpContext.Request.Cookies["JWT"];
 			var tokenHandler = new JwtSecurityTokenHandler();
 			var accessToken = (JwtSecurityToken)tokenHandler.ReadToken(token);
 
@@ -175,6 +164,8 @@ namespace AspnetWeb.Controllers
 			if (userMUID.HasValue)
 			{
 				_redisCache.Remove("shoppinglist_" + userMUID.ToString());
+				_redisCache.Remove("friendlist_" + userMUID.ToString());
+				_redisCache.Remove("friend_hearts_" + userMUID.ToString());
 			}
 			return RedirectToAction("Index", "Home");
 		}
@@ -187,7 +178,6 @@ namespace AspnetWeb.Controllers
 		/// <returns></returns>
 		public IActionResult Register()
 		{
-			ViewData["RegisterPage"] = true;
 			return View();
 		}
 
@@ -208,7 +198,7 @@ namespace AspnetWeb.Controllers
 				return RedirectToAction("Index", "Home");
 			}
 
-			ViewData["RegisterPage"] = true;
+
 			return View(model);
 		}
 

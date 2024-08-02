@@ -29,46 +29,12 @@ namespace AspnetWeb.Controllers
 		[Route("/api/Home/MemberIndex")]
 		public IActionResult MemberIndex()
         {
+            // ViewBag에 데이터 담는 방식은 view를 바로 리턴할 때만 사용가능
 			ViewData["SESSION_KEY"] = string.Empty;  // 내비게이션 바 변경을 위한 ViewData
 
-            return View();
-		}
-
-		[Route("/api/LoginSuccess")]
-		public IActionResult LoginSuccess()
-        {
-            // 세션이 없다면 다시 로그인 페이지로 이동시키기.
-            // 바로 이 주소로 들어온다면 접속이 가능하기때문.
-            // 현재 미들웨어에서 세션 체크중
-
-            // 세션 갱신
-            string sessionKey = HttpContext.Request.Cookies["SESSION_KEY"];
-            long userNo = 0;
-			if (!string.IsNullOrEmpty(sessionKey))
-			{
-				var sessionValue = _redisCache.Get(sessionKey);
-				_authService.UpdateSessionAndCookie(sessionKey, sessionValue);
-			    userNo = BitConverter.ToInt64(sessionValue);
-			}
-
-			ViewData["USER_NO"] = userNo;
-
-			ViewData["SESSION_KEY"] = sessionKey;  // 내비게이션 바 변경을 위한 ViewData
-			ViewData["Page"] = "LoginSuccess";
 			return View();
 		}
 
-        /// <summary>
-        /// JWT 로그인 성공 페이지 - JWT 검증은 미들웨어에서 이루어짐
-        /// </summary>
-        /// <returns></returns>
-        [Route("/api/JWTPage")]
-		public IActionResult JWTPage()
-        {
-			ViewData["SESSION_KEY"] = string.Empty;  // 내비게이션 바 변경을 위한 ViewData
-			ViewData["Page"] = "JWTPage";
-			return View();
-		}
 
 		// 인증 코드를 성공적으로 교환하여 액세스 토큰을 받아오면
 		// 이는 사용자가 성공적으로 인증되고 회원가입이 완료되었음을 의미
@@ -99,29 +65,7 @@ namespace AspnetWeb.Controllers
 
             
             ViewData["SESSION_KEY"] = string.Empty;  // 내비게이션 바 변경을 위한 ViewData
-            ViewData["Page"] = "Google";
             return View(googleUser);
-        }
-
-        // 해당 경로(/api/MyPage)로 함수 실행과 컨트롤러 실행을 통한 함수 실행 둘 다 가능
-		[Route("/api/MyPage")]
-		public IActionResult MyPage()
-        {
-            // 세션이 없다면 다시 로그인 페이지로 이동시키기.
-            // 바로 이 주소로 들어온다면 접속이 가능하기때문.
-            // 현재 미들웨어에서 세션 체크중
-
-		    // 세션로그인일 시 세션 갱신
-		    string sessionKey = HttpContext.Request.Cookies["SESSION_KEY"];
-            if(!string.IsNullOrEmpty(sessionKey))
-            {
-		        var sessionValue = _redisCache.Get(sessionKey);
-		        _authService.UpdateSessionAndCookie(sessionKey, sessionValue);
-            }
-
-		    ViewData["SESSION_KEY"] = string.Empty;  // 내비게이션 바 변경을 위한 ViewData
-            ViewData["Page"] = "MyPage";
-            return View();
         }
 
 

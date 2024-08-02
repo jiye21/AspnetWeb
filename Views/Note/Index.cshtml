@@ -1,5 +1,27 @@
-﻿@*
-    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
-*@
-@{
-}
+﻿
+
+<table class="table table-bordered">
+	<thead>
+		<tr>
+			<th>번호</th>
+			<th>제목</th>
+			<th>작성자</th>
+		</tr>
+	</thead>
+	<tbody>
+		@foreach(var note in Model)
+		{
+			<tr>
+				<td>@note.NoteNo</td>
+				<td>
+					<a asp-controller="Note" asp-action="Detail" asp-route-noteNo="@note.NoteNo">
+						@note.NoteTitle
+					</a>
+				</td>
+				<td>@note.UserName</td>
+			</tr>
+		}
+	</tbody>
+</table>
+
+<a class="btn btn-warning" asp-controller="Note" asp-action="Add">게시물 작성</a>

@@ -93,7 +93,6 @@ namespace AspnetWeb.Controllers
 				}
 			}
 
-			ViewData["ShopPage"] = string.Empty;  // 내비게이션 바 변경을 위한 ViewData
 			return View(shoppingListInfo);
 		}
 
@@ -265,7 +264,6 @@ namespace AspnetWeb.Controllers
 			}
 
 
-			ViewData["ShopPage"] = string.Empty;  // 내비게이션 바 변경을 위한 ViewData
 			return View(friendListInfo);
 		}
 

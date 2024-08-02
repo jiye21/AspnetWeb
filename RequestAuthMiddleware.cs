@@ -37,7 +37,10 @@ namespace AspnetWeb
 				var sessionValue = _redisCache.Get(sessionKey);
 				if (sessionValue != null)
 				{
+					// 세션 업데이트
 					authService.UpdateSessionAndCookie(sessionKey, sessionValue);
+					// 내비게이션바 변경 데이터 추가?
+
 					await _next(context);
 					return;
 				}
@@ -45,9 +48,8 @@ namespace AspnetWeb
 
 
 
-			// 세션이 아닐경우 JWT 검증
-			/*
-			string accessToken = context.Request.Cookies["AccessToken"];
+			// 세션이 아닐경우 JWT 검증			
+			string accessToken = context.Request.Cookies["JWT"];
             if (string.IsNullOrEmpty(accessToken))
             {
                 context.Response.StatusCode = StatusCodes.Status401Unauthorized;
@@ -60,24 +62,6 @@ namespace AspnetWeb
                 await context.Response.WriteAsync("jwt token validation failed");
                 return;
             }
-			*/
-
-            if (!context.Request.Headers.TryGetValue("Authorization", out var extractedApiKey))
-			{
-				context.Response.StatusCode = StatusCodes.Status401Unauthorized;
-				await context.Response.WriteAsync("Api Key was not provided. (Using ApiKeyMiddleware)");
-				return;
-			}
-
-			// authorization bearer 형식의 헤더 키 값으로 넘어옴
-			string accessToken = context.Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
-			if (this.ValidateToken(accessToken) == false)
-			{
-				context.Response.StatusCode = StatusCodes.Status401Unauthorized;
-				await context.Response.WriteAsync("jwt token validation failed");
-				return;
-			}
-			
 
 			await _next(context);
 		}

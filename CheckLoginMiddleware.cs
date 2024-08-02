@@ -30,7 +30,6 @@ namespace AspnetWeb
 		{
 			// 세션 검증
 			string sessionKey = context.Request.Cookies["SESSION_KEY"];
-
 			if (!string.IsNullOrEmpty(sessionKey))
 			{
 				context.Response.StatusCode = StatusCodes.Status401Unauthorized;
@@ -40,21 +39,13 @@ namespace AspnetWeb
 
 
 			// 세션이 아닐경우 JWT 검증
-			/*
-			string accessToken = context.Request.Cookies["AccessToken"];
+			string accessToken = context.Request.Cookies["JWT"];
             if (!string.IsNullOrEmpty(accessToken))
             {
                 context.Response.StatusCode = StatusCodes.Status401Unauthorized;
                 await context.Response.WriteAsync("You are already Loggined in");
                 return;
             }
-			*/
-			if (context.Request.Headers.TryGetValue("Authorization", out var extractedApiKey))
-			{
-				context.Response.StatusCode = StatusCodes.Status401Unauthorized;
-				await context.Response.WriteAsync("You are already Loggined in");
-				return;
-			}
 
 			await _next(context);
 		}

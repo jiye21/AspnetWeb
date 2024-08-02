@@ -13,6 +13,8 @@ namespace AspnetWeb.Models
 
         public string NoteContents { get; set; }
 
+        public string UserName { get; set; }
+
         public long UID { get; set; }
 
         /*
