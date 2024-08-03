@@ -337,10 +337,6 @@
 		}
 		
 		
-		function getAuthorizationHeader() {
-			const token = sessionStorage.getItem('jwtToken');
-			return token ? token : null;
-		}
 
 		async function sendData() {
 			console.log("sendData called.");
@@ -352,7 +348,6 @@
 			const time = new Date();
 			const isotime = time.toISOString();
 
-			const token = getAuthorizationHeader();
 
 			if (isCorn) {
 				console.log("isCorn called.");
@@ -362,8 +357,7 @@
 				await fetch('https://localhost:44396/api/MyPage/ShoppingList', {
 					method: 'POST',
 					headers: {
-						'Content-Type': 'application/json',
-						"Authorization": `Bearer ${token}`
+						'Content-Type': 'application/json'
 					},
 					body: JSON.stringify({
 						Product: "Corn",
@@ -376,9 +370,8 @@
 						// ?? confirm의 결과가 어떻든 reload만 하는 중
 						if (!response.ok) {
 							if (confirm("회원만 구매할 수 있습니다. 로그인 하시겠습니까?")) {
-								window.location.href = 'https://localhost:44396/Account/Login';
-							}
-							else {
+								window.location.href = '/Account/Login';
+							} else {
 								location.reload();
 							}
 						}
@@ -393,8 +386,7 @@
 				await fetch('https://localhost:44396/api/MyPage/ShoppingList', {
 					method: 'POST',
 					headers: {
-						'Content-Type': 'application/json',
-						"Authorization": `Bearer ${token}`
+						'Content-Type': 'application/json'
 					},
 					body: JSON.stringify({
 						Product: "Cucumber",
@@ -406,9 +398,8 @@
 					.then(response => {
 						if (!response.ok) {
 							if (confirm("회원만 구매할 수 있습니다. 로그인 하시겠습니까?")) {
-								window.location.href = 'https://localhost:44396/Account/Login';
-							}
-							else {
+								window.location.href = '/Account/Login';
+							} else {
 								location.reload();
 							}
 						}
@@ -423,8 +414,7 @@
 				await fetch('https://localhost:44396/api/MyPage/ShoppingList', {
 					method: 'POST',
 					headers: {
-						'Content-Type': 'application/json',
-						"Authorization": `Bearer ${token}`
+						'Content-Type': 'application/json'
 					},
 					body: JSON.stringify({
 						Product: "Rainboots",
@@ -436,9 +426,9 @@
 					.then(response => {
 						if (!response.ok) {
 							if (confirm("회원만 구매할 수 있습니다. 로그인 하시겠습니까?")) {
-								window.location.href = 'https://localhost:44396/Account/Login';
+								window.location.href = '/Account/Login';
 							}
-							else{
+							else {
 								location.reload();
 							}
 						}

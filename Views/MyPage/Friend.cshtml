@@ -100,7 +100,6 @@
 			const friendMUID = document.getElementById('friendMUID' + lastChar).innerText;
 			const heartCountElement = document.getElementById('heartCount' + lastChar);
 
-			const token = getAuthorizationHeader();
 
 			// 현재 좋아요 수
 			let heartCount = heartCountElement.innerText;
@@ -123,8 +122,7 @@
 			fetch('https://localhost:44396/api/MyPage/UpdateHeartCount', {
 				method: 'POST',
 				headers: {
-					'Content-Type': 'application/json',
-					"Authorization": `Bearer ${token}`
+					'Content-Type': 'application/json'
 				},
 				body: JSON.stringify({
 					FriendName: friendName,
@@ -145,10 +143,6 @@
 
 		}
 
-		function getAuthorizationHeader() {
-			const token = sessionStorage.getItem('jwtToken');
-			return token ? token : null;
-		}
 
 		function searchUser() {
 			let username = document.getElementById("username").value;

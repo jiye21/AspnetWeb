@@ -50,12 +50,7 @@ namespace AspnetWeb
 
 			// 세션이 아닐경우 JWT 검증			
 			string accessToken = context.Request.Cookies["JWT"];
-            if (string.IsNullOrEmpty(accessToken))
-            {
-                context.Response.StatusCode = StatusCodes.Status401Unauthorized;
-                await context.Response.WriteAsync("Api Key was not provided. (Using ApiKeyMiddleware)");
-                return;
-            }
+
             if (this.ValidateToken(accessToken) == false)
             {
                 context.Response.StatusCode = StatusCodes.Status401Unauthorized;

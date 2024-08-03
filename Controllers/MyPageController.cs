@@ -1,14 +1,17 @@
 ﻿using AspnetWeb.DataContext;
 using AspnetWeb.Models;
 using AspnetWeb.ViewModel;
+using Azure.Core;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Distributed;
+using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using StackExchange.Redis;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using System.Text;
 
 
 namespace AspnetWeb.Controllers
@@ -185,10 +188,10 @@ namespace AspnetWeb.Controllers
 		/// <returns></returns>
 		public long? GetUserMUID()
 		{
-			// 세션에서 유저의 MUID 가져옴
-			string sessionKey = HttpContext.Request.Cookies["SESSION_KEY"];
 			long? userMUID = null;
 
+			// 세션에서 유저의 MUID 가져옴
+			string sessionKey = HttpContext.Request.Cookies["SESSION_KEY"];
 			if (!string.IsNullOrEmpty(sessionKey))
 			{
 				var sessionValue = _redisCache.Get(sessionKey);
@@ -200,22 +203,51 @@ namespace AspnetWeb.Controllers
 			}
 
 			// 세션로그인이 아닐경우 JWT의 Claim에서 가져옴
-			/*
-			 userMUID = Convert.ToInt64(User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value);
-			 return userMUID;
-			*/
-			string token = HttpContext.Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
-			if (!string.IsNullOrEmpty(token))
+			string token = HttpContext.Request.Cookies["JWT"];
+			if (this.ValidateToken(token) == true)
 			{
+				// 만료된 JWT에서 유저정보를 읽지 않기 위해 다시 JWT 검증
 				var tokenHandler = new JwtSecurityTokenHandler();
 				var accessToken = (JwtSecurityToken)tokenHandler.ReadToken(token);
 
 				userMUID = Convert.ToInt64(accessToken.Claims.
-					FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value);
+					FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value);				
 			}
 
-
 			return userMUID;
+		}
+
+		/// <summary>
+		/// JWT 검증 함수
+		/// </summary>
+		/// <param name="token"></param>
+		/// <returns></returns>
+		private bool ValidateToken(string token)
+		{
+			if (string.IsNullOrWhiteSpace(token))
+				return false;
+
+			try
+			{
+				var tokenHandler = new JwtSecurityTokenHandler();
+				var authSigningKey = Encoding.UTF8.GetBytes(_configuration["JWT:SecretKey"]);
+				tokenHandler.ValidateToken(token, new TokenValidationParameters
+				{
+					ValidateIssuerSigningKey = true,
+					IssuerSigningKey = new SymmetricSecurityKey(authSigningKey),
+					ValidateIssuer = false,
+					ValidateAudience = false,
+					// set clockskew to zero so tokens expire exactly at token expiration time (instead of 5 minutes later)
+					ClockSkew = TimeSpan.Zero
+				}, out SecurityToken validatedToken);
+
+				// 만약 위 tokenHandler.ValidateToken에서 예외가 발생하지 않았다면 true 리턴
+				return true;
+			}
+			catch (Exception ex)
+			{
+				return false;
+			}
 		}
 
 		/// <summary>

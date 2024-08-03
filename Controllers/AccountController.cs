@@ -134,7 +134,7 @@ namespace AspnetWeb.Controllers
 			// (Google 로그인도 세션을 발급받아 마이페이지 접근하므로 로그아웃 시 세션로그인과 동일하게 처리)
             if (!string.IsNullOrEmpty(sessionKey))
             {
-				// api 미들웨어에서 세션 검증완료, 바로 세션 삭제만 진행
+				// api 미들웨어에서 세션 검증완료-> 바로 세션 삭제 진행
 				var sessionValue = _redisCache.Get(sessionKey);
 				if (sessionValue != null)
 				{
@@ -154,7 +154,8 @@ namespace AspnetWeb.Controllers
 
 
 
-			// 세션 로그인이 아니라면 JWT 로그인, 캐싱된 shoppinglist 데이터만 삭제
+			// 세션 로그인이 아니라면 JWT 로그인
+			// 캐싱된 shoppinglist 데이터만 삭제
 			string token = HttpContext.Request.Cookies["JWT"];
 			var tokenHandler = new JwtSecurityTokenHandler();
 			var accessToken = (JwtSecurityToken)tokenHandler.ReadToken(token);
@@ -167,6 +168,7 @@ namespace AspnetWeb.Controllers
 				_redisCache.Remove("friendlist_" + userMUID.ToString());
 				_redisCache.Remove("friend_hearts_" + userMUID.ToString());
 			}
+			HttpContext.Response.Cookies.Delete("JWT");
 			return RedirectToAction("Index", "Home");
 		}
 
@@ -191,8 +193,6 @@ namespace AspnetWeb.Controllers
 		{
 			if (ModelState.IsValid)
 			{
-				// 계정이 있으면 로그인시키고, 계정 없으면 회원가입 할까요?알림창->구글로 회원가입 시키기.
-
 				_authService.RegisterUserAsync(model);
 
 				return RedirectToAction("Index", "Home");

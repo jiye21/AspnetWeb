@@ -1,9 +1,7 @@
 ﻿using AspnetWeb.DataContext;
 using AspnetWeb.Models;
-using AspnetWeb.ViewModel;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Caching.Distributed;
-using Microsoft.Extensions.Caching.StackExchangeRedis;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 
@@ -122,11 +120,7 @@ namespace AspnetWeb.Controllers
 			}
 
 			// 세션로그인이 아닐경우 JWT의 Claim에서 가져옴
-			/*
-			 userMUID = Convert.ToInt64(User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value);
-			 return userMUID;
-			*/
-			string token = HttpContext.Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
+			string token = HttpContext.Request.Cookies["JWT"];
 			if (!string.IsNullOrEmpty(token))
 			{
 				var tokenHandler = new JwtSecurityTokenHandler();
