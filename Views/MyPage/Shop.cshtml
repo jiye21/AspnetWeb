@@ -70,7 +70,7 @@
 		</td>
 	</tr>
 
-	
+
 </table>
 <h2>Total</h2>
 <table class="rwd-table" id="shop-total">
@@ -82,7 +82,6 @@
 		</tr>
 	</thead>
 	<tbody>
-		
 	</tbody>
 	<tfoot>
 		<tr>
@@ -144,7 +143,7 @@
 			const resultElement = document.getElementById('result' + lastChar);
 			const priceElement = document.getElementById('price' + lastChar);
 
-			
+
 
 			// 현재 화면에 표시된 값
 			let number = resultElement.innerText;
@@ -165,7 +164,7 @@
 
 						return;
 					}
-					if (lastChar == "5"){
+					if (lastChar == "5") {
 						const element = document.getElementById("Cucumber");
 						element.remove();
 
@@ -187,16 +186,17 @@
 					price = price * parseInt(number);
 				}
 			}
-			
+
 
 			// 결과 출력
 			resultElement.innerText = number;
 			priceElement.innerText = price;
 		}
 
-		
-		
-		function addCart(type){
+
+
+		function addCart(type) {
+			console.log("addcart");
 			let lastChar = type.slice(-1);
 
 			const productname = document.getElementById('product' + lastChar).innerText;
@@ -212,7 +212,7 @@
 
 			// 만약 동일한 상품이 이미 장바구니에 존재한다면 개수만 증가
 			const isRow = document.getElementById(productname);
-			if (isRow){
+			if (isRow) {
 				if (productname == 'Corn') {
 					let isResultElem = document.getElementById("result" + "1");
 					let isPriceElem = document.getElementById("price" + "1");
@@ -278,7 +278,7 @@
 
 			// productname 별로 장바구니 버튼 id 지정
 			let plusButtonValue = 0;
-			if(productname == 'Corn'){
+			if (productname == 'Corn') {
 				plusButtonValue = "4";
 			}
 			else if (productname == 'Cucumber') {
@@ -335,8 +335,21 @@
 
 			shopTotalTableBody.appendChild(row);
 		}
-		
-		
+
+
+		// 모델과 뷰 !! M V
+
+
+		// 장바구니 데이터를 클라이언트측에서 자바스크립트 전역변수로 관리하기 !!!!!!!!!!!!!
+		// 뷰를 고칠때 데이터를 한번 훑어서 고쳐주기
+		// 그러면 나중에 저장된 데이터만 훑어봐서 서버에 보내주면 된다
+
+		// 데이터가 변경되면 변경사항 반영해서 다시 뷰에 뿌려주는 함수 만들기
+
+		// 장바구니에 담아놓기만 하고 구매하지 않은 상품은 로컬스토리지에 담아두면 됨
+
+		// 판매 상품 목록도 html에 박아두는 것이 아닌 서버에서 응답으로 json데이터를 받아와서 while문을 돌면서 화면에 뿌려주기 -> innerHtml
+		// 서버에서 상품목록을 받아오면 거기에 있는 상품명을 사용하기
 
 		async function sendData() {
 			console.log("sendData called.");
@@ -347,24 +360,52 @@
 
 			const time = new Date();
 			const isotime = time.toISOString();
+			let index = 0;
+			let sendObject = new Array();
 
-
-			if (isCorn) {
-				console.log("isCorn called.");
+			if(isCorn){
 				const count = document.getElementById('result' + "4").innerText;
 				const price = document.getElementById('price' + "4").innerText;
+				sendObject[index++] = {
+					Product: "corn",
+					Count: count,
+					Price: price,
+					PurchaseDate: isotime
+				};
+			}
 
-				await fetch('https://localhost:44396/api/MyPage/ShoppingList', {
+			if (isCucumber) {
+				const count = document.getElementById('result' + "5").innerText;
+				const price = document.getElementById('price' + "5").innerText;
+
+				sendObject[index++] = {
+					Product: "cucumber",
+					Count: count,
+					Price: price,
+					PurchaseDate: isotime
+				};
+			}
+
+			if (isRainboots) {
+				const count = document.getElementById('result' + "6").innerText;
+				const price = document.getElementById('price' + "6").innerText;
+
+				sendObject[index++] = {
+					Product: "rainboots",
+					Count: count,
+					Price: price,
+					PurchaseDate: isotime
+				};
+			}
+
+			console.log(sendObject);
+
+			await fetch('https://localhost:44396/api/MyPage/ShoppingList', {
 					method: 'POST',
 					headers: {
 						'Content-Type': 'application/json'
 					},
-					body: JSON.stringify({
-						Product: "Corn",
-						Count: parseInt(count),
-						Price: parseInt(price),
-						PurchaseDate: isotime
-					}),
+				body: JSON.stringify(sendObject),
 				})
 					.then(response => {
 						// ?? confirm의 결과가 어떻든 reload만 하는 중
@@ -375,7 +416,45 @@
 								location.reload();
 							}
 						}
+						else {
+							//location.reload();
+							window.location.href = '/MyPage/Shop';
+						}
 					});
+			
+
+			/*
+			if (isCorn) {
+				console.log("isCorn called.");
+				const count = document.getElementById('result' + "4").innerText;
+				const price = document.getElementById('price' + "4").innerText;
+
+				// await fetch('https://localhost:44396/api/MyPage/ShoppingList', {
+				// 	method: 'POST',
+				// 	headers: {
+				// 		'Content-Type': 'application/json'
+				// 	},
+				// 	body: JSON.stringify({
+				// 		Product: "Corn",
+				// 		Count: parseInt(count),
+				// 		Price: parseInt(price),
+				// 		PurchaseDate: isotime
+				// 	}),
+				// })
+				// 	.then(response => {
+				// 		// ?? confirm의 결과가 어떻든 reload만 하는 중
+				// 		if (!response.ok) {
+				// 			if (confirm("회원만 구매할 수 있습니다. 로그인 하시겠습니까?")) {
+				// 				window.location.href = '/Account/Login';
+				// 			} else {
+				// 				location.reload();
+				// 			}
+				// 		}
+				// 		else {
+				// 			//location.reload();
+				// 			window.location.href = '/MyPage/Shop';
+				// 		}
+				// 	});
 			}
 			if(isCucumber){
 				console.log("isCucumber called.");
@@ -383,27 +462,29 @@
 				const count = document.getElementById('result' + "5").innerText;
 				const price = document.getElementById('price' + "5").innerText;
 
-				await fetch('https://localhost:44396/api/MyPage/ShoppingList', {
-					method: 'POST',
-					headers: {
-						'Content-Type': 'application/json'
-					},
-					body: JSON.stringify({
-						Product: "Cucumber",
-						Count: parseInt(count),
-						Price: parseInt(price),
-						PurchaseDate: isotime
-					}),
-				})
-					.then(response => {
-						if (!response.ok) {
-							if (confirm("회원만 구매할 수 있습니다. 로그인 하시겠습니까?")) {
-								window.location.href = '/Account/Login';
-							} else {
-								location.reload();
-							}
-						}
-					});
+				// await fetch('https://localhost:44396/api/MyPage/ShoppingList', {
+				// 	method: 'POST',
+				// 	headers: {
+				// 		'Content-Type': 'application/json'
+				// 	},
+				// 	body: JSON.stringify({
+				// 		Product: "Cucumber",
+				// 		Count: parseInt(count),
+				// 		Price: parseInt(price),
+				// 		PurchaseDate: isotime
+				// 	}),
+				// })
+				// 	.then(response => {
+				// 		if (!response.ok) {
+				// 			if (confirm("회원만 구매할 수 있습니다. 로그인 하시겠습니까?")) {
+				// 				window.location.href = '/Account/Login';
+				// 			} else {
+				// 				location.reload();
+				// 			}
+				// 		}
+				// 		else
+				// 			window.location.href = '/MyPage/Shop';
+				// 	});
 			}
 			if (isRainboots) {
 				console.log("isRainboots called.");
@@ -411,34 +492,37 @@
 				const count = document.getElementById('result' + "6").innerText;
 				const price = document.getElementById('price' + "6").innerText;
 
-				await fetch('https://localhost:44396/api/MyPage/ShoppingList', {
-					method: 'POST',
-					headers: {
-						'Content-Type': 'application/json'
-					},
-					body: JSON.stringify({
-						Product: "Rainboots",
-						Count: parseInt(count),
-						Price: parseInt(price),
-						PurchaseDate: isotime
-					}),
-				})
-					.then(response => {
-						if (!response.ok) {
-							if (confirm("회원만 구매할 수 있습니다. 로그인 하시겠습니까?")) {
-								window.location.href = '/Account/Login';
-							}
-							else {
-								location.reload();
-							}
-						}
-					});
+				// await fetch('https://localhost:44396/api/MyPage/ShoppingList', {
+				// 	method: 'POST',
+				// 	headers: {
+				// 		'Content-Type': 'application/json'
+				// 	},
+				// 	body: JSON.stringify({
+				// 		Product: "Rainboots",
+				// 		Count: parseInt(count),
+				// 		Price: parseInt(price),
+				// 		PurchaseDate: isotime
+				// 	}),
+				// })
+				// 	.then(response => {
+				// 		if (!response.ok) {
+				// 			if (confirm("회원만 구매할 수 있습니다. 로그인 하시겠습니까?")) {
+				// 				window.location.href = '/Account/Login';
+				// 			}
+				// 			else {
+				// 				location.reload();
+				// 			}
+				// 		}
+				// 		else { 
+				// 			window.location.href = '/MyPage/Shop';
+
+				// 		}
+				// 	});	
 			}
+			*/
 
 
 
-
-			location.reload();
 		}
 	</script>
 

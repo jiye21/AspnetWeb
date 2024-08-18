@@ -1,5 +1,6 @@
 ﻿using AspnetWeb.DataContext;
 using AspnetWeb.Models;
+using Google.Apis.Oauth2.v2;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Caching.Distributed;
 using System.IdentityModel.Tokens.Jwt;
@@ -12,11 +13,13 @@ namespace AspnetWeb.Controllers
 	{
 		private readonly AspnetNoteDbContext _dbContext;
 		private readonly IDistributedCache _redisCache;
+		private readonly IAuthService _authService;
 
-		public NoteController(AspnetNoteDbContext dbContext, IDistributedCache redisCache)
+		public NoteController(AspnetNoteDbContext dbContext, IDistributedCache redisCache, IAuthService authService)
 		{
 			_dbContext = dbContext;
 			_redisCache = redisCache;
+			_authService = authService;
 		}
 
 		/// <summary>
@@ -25,6 +28,20 @@ namespace AspnetWeb.Controllers
 		/// <returns></returns>
 		public IActionResult Index()
 		{
+			// session 업데이트
+			// getSession으로 따로 함수로 빼기
+			// 로그인 안해도 되는 페이지는 checkSession같은 함수를 따로 두기
+			string sessionKey = HttpContext.Request.Cookies["SESSION_KEY"];
+			if (!string.IsNullOrEmpty(sessionKey))
+			{
+				var sessionValue = _redisCache.Get(sessionKey);
+				_authService.UpdateSessionAndCookie(sessionKey, sessionValue);
+
+				ViewData["SESSION_KEY"] = string.Empty; // 내비게이션 바 변경을 위한 ViewData
+			}
+
+
+
 			var list = _dbContext.Notes.ToList();
 
 			return View(list);
@@ -56,10 +73,10 @@ namespace AspnetWeb.Controllers
 		[Route("/api/Note/Add")]
 		public IActionResult Add(Note model)
 		{
-			long? userUID = GetUserMUID();
-			if(userUID.HasValue)
+			long userUID = GetUserMUID();
+			if(userUID != 0)
 			{
-				model.UID = userUID.Value;
+				model.UID = userUID;
 				var user = _dbContext.Users.FirstOrDefault(u => u.UID.Equals(model.UID));
 				model.UserName = user.UserName;
 			}
@@ -103,11 +120,11 @@ namespace AspnetWeb.Controllers
 			return View();
 		}
 
-		public long? GetUserMUID()
+		public long GetUserMUID()
 		{
 			// 세션에서 유저의 MUID 가져옴
 			string sessionKey = HttpContext.Request.Cookies["SESSION_KEY"];
-			long? userMUID = null;
+			long userMUID = 0;
 
 			if (!string.IsNullOrEmpty(sessionKey))
 			{

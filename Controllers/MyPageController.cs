@@ -1,7 +1,6 @@
 ﻿using AspnetWeb.DataContext;
 using AspnetWeb.Models;
 using AspnetWeb.ViewModel;
-using Azure.Core;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Distributed;
@@ -37,28 +36,37 @@ namespace AspnetWeb.Controllers
 			_authService = authService;
 		}
 
+		// 나중에 redis 키 값을 변경하게 되는 경우에 필요하다
+		public string getKey(long uid) {
+			return "shoppinglist_" + uid.ToString();
+		}
 
+		
 		public async Task<IActionResult> Shop()
 		{
 			List<ShoppingList> shoppingListInfo = new List<ShoppingList>();
-			long? userMUID = GetUserMUID();
+			long userMUID = GetUserMUID();
 
-			// HasValue: 값이 있는 경우- true, 값이 없는 경우(Null)- false
-			if (userMUID.HasValue)
+			if (userMUID != 0)
 			{
-				ViewData["SESSION_KEY"] = string.Empty; // 내비게이션 바 변경을 위한 ViewData
+
 														// session 업데이트
+														// getSession으로 따로 함수로 빼기
+														// 로그인 안해도 되는 페이지는 checkSession같은 함수를 따로 두기
 				string sessionKey = HttpContext.Request.Cookies["SESSION_KEY"];
 				if (!string.IsNullOrEmpty(sessionKey))
 				{
 					var sessionValue = _redisCache.Get(sessionKey);
 					_authService.UpdateSessionAndCookie(sessionKey, sessionValue);
+
+					ViewData["SESSION_KEY"] = string.Empty; // 내비게이션 바 변경을 위한 ViewData
 				}
 
-				var shoppingListValue = _redisCache.GetString("shoppinglist_" + userMUID.ToString());
+				string shoppingListValue = _redisCache.GetString(getKey(userMUID));
 
 				// redis에 shoppingList 캐싱 데이터가 존재하는경우
 				// 저장된 json 데이터를 파싱해 List<ShoppingList> 타입으로 변환
+
 				if (!string.IsNullOrEmpty(shoppingListValue))
 				{
 					// 각 필드를 list로 변환
@@ -106,15 +114,17 @@ namespace AspnetWeb.Controllers
 		/// <returns></returns>
 		[HttpPost]
 		[Route("/api/MyPage/ShoppingList")]
-		public async Task<IActionResult> ShoppingList([FromBody] ShoppingListViewModel model)
+		public async Task<IActionResult> ShoppingList([FromBody] List<ShoppingListViewModel> model)
 		{
+			// 어디에서 오류났는지 제대로 피드백을 주기
 			if (ModelState.IsValid)
 			{
 				long? userMUID = GetUserMUID();
 
 				if (userMUID.HasValue)
 				{
-					// 새로 구입한 물건 추가
+					// 새로 구입한 물건 저장
+					/*
 					var shoppingList = new ShoppingList
 					{
 						Product = model.Product,
@@ -123,9 +133,24 @@ namespace AspnetWeb.Controllers
 						PurchaseDate = model.PurchaseDate,
 						MUID = Convert.ToInt64(userMUID)
 					};
-					// DB에 저장
-					await _dbContext.ShoppingList.AddAsync(shoppingList);
-					_dbContext.SaveChanges();  // 기본 키 값이 설정됨
+					*/
+					foreach(var s in model)
+					{
+						var shoppingList = new ShoppingList
+						{
+							Product = s.Product,
+							Price = s.Price,
+							Count = s.Count,
+							PurchaseDate = s.PurchaseDate,
+							MUID = Convert.ToInt64(userMUID)
+						};
+
+						// DB에 저장
+						await _dbContext.ShoppingList.AddAsync(shoppingList);  // 쿼리를 안쓴다 -> DAO에 파라미터를 DTO를 넣음
+						_dbContext.SaveChanges();  // 기본 키 값이 설정됨
+					}
+
+					
 
 					// redis에 변동사항 저장
 					await SetShoppingListInRedis(Convert.ToInt64(userMUID));
@@ -177,8 +202,6 @@ namespace AspnetWeb.Controllers
 
 			_redisCache.SetString(shoppingKey, shoppingValue);
 
-			//redisDb.JSON().Set(shoppingKey, "$", shoppingValue);
-
 			return shoppingListInfo;
 		}
 
@@ -186,9 +209,9 @@ namespace AspnetWeb.Controllers
 		/// 세션이나 JWT의 claim부분에서 유저의 MUID를 검색
 		/// </summary>
 		/// <returns></returns>
-		public long? GetUserMUID()
+		public long GetUserMUID()
 		{
-			long? userMUID = null;
+			long userMUID = 0;
 
 			// 세션에서 유저의 MUID 가져옴
 			string sessionKey = HttpContext.Request.Cookies["SESSION_KEY"];
@@ -258,16 +281,25 @@ namespace AspnetWeb.Controllers
 		public async Task<IActionResult> Friend()
 		{
 			List<FriendListViewModel> friendListInfo = new List<FriendListViewModel>();
-			long? userMUID = GetUserMUID();
+			long userMUID = GetUserMUID();
 
-			// HasValue: 값이 있는 경우- true, 값이 없는 경우(Null)- false
-			if (userMUID.HasValue)
+
+			if (userMUID != 0)
 			{
 				ViewData["SESSION_KEY"] = string.Empty; // 내비게이션 바 변경을 위한 ViewData
 
 				var friendListValue = _redisCache.GetString("friendlist_" + userMUID.ToString());
 
 				// redis에 friendList 캐싱 데이터가 존재하는경우
+
+				// byte로 저장하기!!!!!
+				// byte로 redis에 set이 안된다면, 클래스를 통으로 json으로 바꾸기  string jsonString = JsonSerializer.Serialize(myObject);
+				// 
+
+				// redis에 get, set을 하는 함수를 따로 빼서 구현한다.
+				// 이때 get을 할 땐 어떤 자료형으로 return 할 지 모르니 제일 부모 클래스인 System.Object를 리턴하도록 함수를 구현한다. 
+				// 나중에 함수를 리턴받아 사용할 때는 MyClass a = (MyClass)GetRedisData(string key, <T>); 이렇게 사용
+				// MyClass a = (MyClass)GetRedisData(string key, <T>);   return (<T>)getredis(key); 이런식으로 템플릿 사용도 가능! 더 고급스러움
 				if (!string.IsNullOrEmpty(friendListValue))
 				{
 					JObject jsonData = JObject.Parse(friendListValue);

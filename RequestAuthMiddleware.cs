@@ -1,13 +1,6 @@
-﻿using AspnetWeb.DataContext;
-using Azure.Core;
-using Microsoft.Extensions.Caching.Distributed;
-using Microsoft.Extensions.Configuration;
+﻿using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.IdentityModel.Tokens;
-using Newtonsoft.Json;
-using StackExchange.Redis;
-using System;
 using System.IdentityModel.Tokens.Jwt;
-using System.Net;
 using System.Text;
 
 namespace AspnetWeb
@@ -39,7 +32,6 @@ namespace AspnetWeb
 				{
 					// 세션 업데이트
 					authService.UpdateSessionAndCookie(sessionKey, sessionValue);
-					// 내비게이션바 변경 데이터 추가?
 
 					await _next(context);
 					return;
@@ -48,7 +40,8 @@ namespace AspnetWeb
 
 
 
-			// 세션이 아닐경우 JWT 검증			
+			// 세션이 아닐경우 JWT 검증
+			// JWT 업데이트?
 			string accessToken = context.Request.Cookies["JWT"];
 
             if (this.ValidateToken(accessToken) == false)
