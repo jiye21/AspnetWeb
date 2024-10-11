@@ -408,7 +408,6 @@
 				body: JSON.stringify(sendObject),
 				})
 					.then(response => {
-						// ?? confirm의 결과가 어떻든 reload만 하는 중
 						if (!response.ok) {
 							if (confirm("회원만 구매할 수 있습니다. 로그인 하시겠습니까?")) {
 								window.location.href = '/Account/Login';
@@ -417,109 +416,12 @@
 							}
 						}
 						else {
-							//location.reload();
 							window.location.href = '/MyPage/Shop';
 						}
 					});
 			
 
-			/*
-			if (isCorn) {
-				console.log("isCorn called.");
-				const count = document.getElementById('result' + "4").innerText;
-				const price = document.getElementById('price' + "4").innerText;
-
-				// await fetch('https://localhost:44396/api/MyPage/ShoppingList', {
-				// 	method: 'POST',
-				// 	headers: {
-				// 		'Content-Type': 'application/json'
-				// 	},
-				// 	body: JSON.stringify({
-				// 		Product: "Corn",
-				// 		Count: parseInt(count),
-				// 		Price: parseInt(price),
-				// 		PurchaseDate: isotime
-				// 	}),
-				// })
-				// 	.then(response => {
-				// 		// ?? confirm의 결과가 어떻든 reload만 하는 중
-				// 		if (!response.ok) {
-				// 			if (confirm("회원만 구매할 수 있습니다. 로그인 하시겠습니까?")) {
-				// 				window.location.href = '/Account/Login';
-				// 			} else {
-				// 				location.reload();
-				// 			}
-				// 		}
-				// 		else {
-				// 			//location.reload();
-				// 			window.location.href = '/MyPage/Shop';
-				// 		}
-				// 	});
-			}
-			if(isCucumber){
-				console.log("isCucumber called.");
-
-				const count = document.getElementById('result' + "5").innerText;
-				const price = document.getElementById('price' + "5").innerText;
-
-				// await fetch('https://localhost:44396/api/MyPage/ShoppingList', {
-				// 	method: 'POST',
-				// 	headers: {
-				// 		'Content-Type': 'application/json'
-				// 	},
-				// 	body: JSON.stringify({
-				// 		Product: "Cucumber",
-				// 		Count: parseInt(count),
-				// 		Price: parseInt(price),
-				// 		PurchaseDate: isotime
-				// 	}),
-				// })
-				// 	.then(response => {
-				// 		if (!response.ok) {
-				// 			if (confirm("회원만 구매할 수 있습니다. 로그인 하시겠습니까?")) {
-				// 				window.location.href = '/Account/Login';
-				// 			} else {
-				// 				location.reload();
-				// 			}
-				// 		}
-				// 		else
-				// 			window.location.href = '/MyPage/Shop';
-				// 	});
-			}
-			if (isRainboots) {
-				console.log("isRainboots called.");
-
-				const count = document.getElementById('result' + "6").innerText;
-				const price = document.getElementById('price' + "6").innerText;
-
-				// await fetch('https://localhost:44396/api/MyPage/ShoppingList', {
-				// 	method: 'POST',
-				// 	headers: {
-				// 		'Content-Type': 'application/json'
-				// 	},
-				// 	body: JSON.stringify({
-				// 		Product: "Rainboots",
-				// 		Count: parseInt(count),
-				// 		Price: parseInt(price),
-				// 		PurchaseDate: isotime
-				// 	}),
-				// })
-				// 	.then(response => {
-				// 		if (!response.ok) {
-				// 			if (confirm("회원만 구매할 수 있습니다. 로그인 하시겠습니까?")) {
-				// 				window.location.href = '/Account/Login';
-				// 			}
-				// 			else {
-				// 				location.reload();
-				// 			}
-				// 		}
-				// 		else { 
-				// 			window.location.href = '/MyPage/Shop';
-
-				// 		}
-				// 	});	
-			}
-			*/
+			
 
 
 

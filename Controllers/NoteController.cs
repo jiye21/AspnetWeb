@@ -1,10 +1,11 @@
 ﻿using AspnetWeb.DataContext;
 using AspnetWeb.Models;
-using Google.Apis.Oauth2.v2;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Caching.Distributed;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using AspnetWeb.ViewModel;
+
 
 
 namespace AspnetWeb.Controllers
@@ -66,28 +67,40 @@ namespace AspnetWeb.Controllers
 		[Route("/api/Note/Add")]
 		public IActionResult Add()
 		{
-			return View();
+            long userUID = GetUserMUID();
+            if (userUID != 0)
+            {
+                ViewData["SESSION_KEY"] = string.Empty; // 내비게이션 바 변경을 위한 ViewData
+            }
+
+            return View();
 		}
 
 		[HttpPost]
 		[Route("/api/Note/Add")]
-		public IActionResult Add(Note model)
+		public IActionResult Add(NoteViewModel model)
 		{
-			long userUID = GetUserMUID();
-			if(userUID != 0)
-			{
-				model.UID = userUID;
-				var user = _dbContext.Users.FirstOrDefault(u => u.UID.Equals(model.UID));
-				model.UserName = user.UserName;
-			}
-
 			if(ModelState.IsValid)
 			{
-				_dbContext.Notes.Add(model);
+                long userUID = GetUserMUID();
+                if (userUID != 0)
+                {
+                    User user = _dbContext.Users.FirstOrDefault(u => u.UID.Equals(userUID));
+					Note note = new Note()
+					{
+						NoteTitle = model.NoteTitle,
+						NoteContents = model.NoteContents,
+						UserName = user.UserName,
+						UID = user.UID
+					};
+
+					_dbContext.Notes.Add(note);
+                }
+
 
 				if(_dbContext.SaveChanges() > 0) // SaveChanges를 수행하면 결과로 성공한 갯수가 반환됨. 여기서는 하나만 저장하므로 1이 반환되어야 함
 				{
-					return Redirect("Index");
+					return RedirectToAction("Index");
 				}
 
 				// 게시물 추가 실패
