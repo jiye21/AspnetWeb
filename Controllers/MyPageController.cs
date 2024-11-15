@@ -289,7 +289,7 @@ namespace AspnetWeb.Controllers
             return View(friendListInfo);
         }
 
-        // Redis에 캐싱된 데이터를 읽어오는 함수
+        // Redis에 캐싱된 데이터를 읽어오는 함수, 템플릿을 사용해봄
         public List<T> GetRedisData<T>(string key, string value)
         {
             List<T> redisValueList = new List<T>();
