@@ -119,7 +119,7 @@
 			}
 
 			// 좋아요 수 업데이트
-			fetch('https://localhost:44396/api/MyPage/UpdateHeartCount', {
+			fetch('https://localhost:5001/api/MyPage/UpdateHeartCount', {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json'
@@ -151,7 +151,7 @@
 			console.log("검색할 사용자 이름:", username);
 
 			// URL에 템플릿 리터럴을 사용할 때, 백틱(``)을 사용해야 함.
-			fetch(`https://localhost:44396/api/MyPage/SearchFriendWithName/${encodeURIComponent(username)}`, {
+			fetch(`https://localhost:5001/api/MyPage/SearchFriendWithName/${encodeURIComponent(username)}`, {
 				method: 'GET',
 			})
 				.then(response => response.json())
@@ -199,7 +199,7 @@
 
 		function addUser(muid) {
 			// URL에 템플릿 리터럴을 사용할 때, 백틱(``)을 사용해야 함.
-			fetch(`https://localhost:44396/api/MyPage/AddFriend/${encodeURIComponent(muid)}`, {
+			fetch(`https://localhost:5001/api/MyPage/AddFriend/${encodeURIComponent(muid)}`, {
 				method: 'GET',
 			})
 				.then(response => {
@@ -209,7 +209,7 @@
 
 		function deleteFriend(muid) {
 			if (confirm("정말 삭제하시겠습니까?")){
-				fetch(`https://localhost:44396/api/MyPage/DeleteFriend/${encodeURIComponent(muid)}`, {
+				fetch(`https://localhost:5001/api/MyPage/DeleteFriend/${encodeURIComponent(muid)}`, {
 					method: 'GET',
 				})
 					.then(response => {

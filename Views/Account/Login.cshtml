@@ -22,7 +22,7 @@
 	</div>
 	<div class="social-container">
 		<p>or use Google for Login</p>
-		<a href="https://localhost:44396/Account/GoogleLogin" class="social"><i class="fab fa-google-plus-g"></i></a>
+		<a href="https://localhost:5001/Account/GoogleLogin" class="social"><i class="fab fa-google-plus-g"></i></a>
 	</div>
 </form>
 
@@ -59,7 +59,7 @@
 			}
 
 			try {
-				const response = await fetch("https://localhost:44396/Account/LoginWithJWT", {
+				const response = await fetch("https://localhost:5001/Account/LoginWithJWT", {
 					method: "POST",
 					headers: {
 						"Content-Type": "application/json"

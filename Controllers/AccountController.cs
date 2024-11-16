@@ -209,7 +209,7 @@ namespace AspnetWeb.Controllers
 			// 인증을 위한 요청 URL에 redirect_uri 파트를 json 파일의 내용으로부터 가져오지 않는다. 
 			// 따라서 ASP.NET 환경에서는 인증 요청에 대한 URL을 직접 작성해야 한다. 
 
-			string rediect_uri = "https://localhost:44396/Home/GoogleUserEmailList";
+			string rediect_uri = "https://localhost:5001/Home/GoogleUserEmailList";
 
 			var request = _flow.CreateAuthorizationCodeRequest(
 				rediect_uri);    // redirect uri를 포함시켜 google 인증 요청을 위한 url 생성

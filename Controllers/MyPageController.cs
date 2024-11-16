@@ -85,12 +85,14 @@ namespace AspnetWeb.Controllers
                 // redis에 shoppingList 캐싱 데이터가 존재하는경우
                 // 저장된 json 데이터를 파싱해 List<ShoppingList> 타입으로 변환
                 if (!string.IsNullOrEmpty(shoppingListValue))
-                {                    
+                {
+                    Console.WriteLine("redis에서 read함");
                     shoppingListInfo = GetRedisData<ShoppingList>(GetShoppingKey(userMUID), shoppingListValue);
                 }
                 else
                 {
                     // shoppingList를 받아와 json 데이터로 변환 후 redis에 set
+                    Console.WriteLine("DB에서 read함");
                     shoppingListInfo = await SetShoppingListInRedis(userMUID);
                 }
             }

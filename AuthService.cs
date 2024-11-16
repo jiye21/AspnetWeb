@@ -139,7 +139,7 @@ namespace AspnetWeb
 			try
 			{
 				var tokenResponse = _flow.ExchangeCodeForTokenAsync(null, code,
-						"https://localhost:44396/Home/GoogleUserEmailList", CancellationToken.None).Result;
+						"https://localhost:5001/Home/GoogleUserEmailList", CancellationToken.None).Result;
 
 				accessToken = tokenResponse.AccessToken;
 			}

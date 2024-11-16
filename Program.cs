@@ -93,6 +93,8 @@ app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
 
+// 요청/응답 처리시간 측정 미들웨어
+app.UseMiddleware<QueryTimingMiddleware>();
 
 // 세션, JWT 인증 체크 Middleware 추가, [api] 컨트롤러만 적용
 app.UseWhen(context => context.Request.Path.StartsWithSegments("/api"), appBuilder =>
